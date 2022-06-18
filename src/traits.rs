@@ -23,13 +23,21 @@ use crate::iter::{
 	IterColsPtrMut
 };
 
-mod sealed { pub trait Sealed {} }
+mod sealed {
+	pub trait SealedPtr {}
+
+	pub trait SealedPtrMut {}
+
+	pub trait Sealed {}
+
+	pub trait SealedMut {}
+}
 
 /// Exposes iterators that return `*const` pointers.
 ///
 /// Implemented for buffer pointers, i.e. [`Img<*const [T]>`][Img] and
 /// [`Img<*mut [T]>`][Img].
-pub trait ImgIterPtr: sealed::Sealed {
+pub trait ImgIterPtr: sealed::SealedPtr {
 	type Item;
 	type AsPtr: ImgIterPtr<Item = Self::Item>;
 
@@ -97,7 +105,7 @@ pub trait ImgIterPtr: sealed::Sealed {
 /// Exposes iterators that return `*mut` pointers.
 ///
 /// Implemented for `mut` buffer pointers, i.e. [`Img<*mut [T]>`][Img].
-pub trait ImgIterPtrMut: ImgIterPtr {
+pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
 
 	/// Returns this [`Img`] as with the buffer type converted to a mutable
@@ -167,7 +175,7 @@ pub trait ImgIterPtrMut: ImgIterPtr {
 ///
 /// Implemented for all ordinary references and owned containers, i.e.
 /// [`Img<&[T]>`][Img].
-pub trait ImgIter: ImgIterPtr {
+pub trait ImgIter: sealed::Sealed + ImgIterPtr {
 	/// Returns an iterator over the pixels of the specified row.
 	///
 	/// # Panics
@@ -193,7 +201,7 @@ pub trait ImgIter: ImgIterPtr {
 ///
 /// Implemented for all mutable references and owned containers, i.e.
 /// [`Img<&mut [T]>`][Img] or [`Img<Vec<T>>`][Img].
-pub trait ImgIterMut: ImgIter + ImgIterPtrMut {
+pub trait ImgIterMut: sealed::SealedMut + ImgIter + ImgIterPtrMut {
 	/// Returns an iterator over the pixels of the specified row.
 	///
 	/// # Panics
@@ -215,13 +223,20 @@ pub trait ImgIterMut: ImgIter + ImgIterPtrMut {
 	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item>;
 }
 
-impl<T> sealed::Sealed for Img<*const [T]> {}
+// @formatter:off
+impl<T> sealed::SealedPtr for Img<*const [T]> {}
 
-impl<T> sealed::Sealed for Img<*mut [T]> {}
+impl<T> sealed::SealedPtr for Img<*mut [T]> {}
+impl<T> sealed::SealedPtrMut for Img<*mut [T]> {}
 
+impl<T> sealed::SealedPtr for Img<&[T]> {}
 impl<T> sealed::Sealed for Img<&[T]> {}
 
+impl<T> sealed::SealedPtr for Img<&mut [T]> {}
+impl<T> sealed::SealedPtrMut for Img<&mut [T]> {}
 impl<T> sealed::Sealed for Img<&mut [T]> {}
+impl<T> sealed::SealedMut for Img<&mut [T]> {}
+// @formatter:on
 
 #[inline]
 unsafe fn copy_buf_unchecked<T, U>(img: &Img<T>, map: impl FnOnce(&T) -> U) -> Img<U> {
