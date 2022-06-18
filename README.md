@@ -19,9 +19,9 @@ columns of `imgref::Img`s:
 As well as two utility traits for converting to `Img<*const [T]>` or
 `Img<*mut [T]>`:
 
-- [`ImgAsPtr`] for conversions to `Img<*const [T]>`.
+- `ImgAsPtr` for conversions to `Img<*const [T]>`.
 
-- [`ImgAsMutPtr`] for conversions to `Img<*mut [T]>`.
+- `ImgAsMutPtr` for conversions to `Img<*mut [T]>`.
 
   This is actually not implemented by anything other than `Img<*mut [T]>`, but
   it exists for the purpose of documenting why it cannot be implemented for
