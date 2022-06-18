@@ -16,6 +16,17 @@ columns of `imgref::Img`s:
 - `ImgIterMut` for `Img<&mut [T]>`; allows creating iterators over mutable
   references
 
+As well as two utility traits for converting to `Img<*const [T]>` or
+`Img<*mut [T]>`:
+
+- [`ImgAsPtr`] for conversions to `Img<*const [T]>`.
+
+- [`ImgAsMutPtr`] for conversions to `Img<*mut [T]>`.
+
+  This is actually not implemented by anything other than `Img<*mut [T]>`, but
+  it exists for the purpose of documenting why it cannot be implemented for
+  `Img<&mut [T]>`.
+
 Methods on `ImgIterPtr` and `ImgIterPtrMut` are `unsafe` because they offset on
 the provided pointers. `ImgIter` and `ImgIterMut` cannot include safe versions
 because the pointer iterators may outlive the references.

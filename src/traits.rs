@@ -24,6 +24,10 @@ use crate::iter::{
 };
 
 mod sealed {
+	pub trait SealedAsPtr {}
+
+	pub trait SealedAsMutPtr {}
+
 	pub trait SealedPtr {}
 
 	pub trait SealedPtrMut {}
@@ -33,17 +37,31 @@ mod sealed {
 	pub trait SealedMut {}
 }
 
+/// The trait for images whose buffers can be converted to a `*const` pointer.
+pub trait ImgAsPtr: sealed::SealedAsPtr {
+	type Item;
+	type AsPtr: ImgIterPtr<Item = Self::Item>;
+
+	/// Returns an [`Img`] that points to this one's buffer.
+	fn as_ptr(&self) -> Self::AsPtr;
+}
+
+/// The trait for [`Img`]s whose buffers can be converted to a `*mut` pointer
+/// *through a shared borrow*. `Img<&mut [T]>` cannot implement this because a
+/// mutable reference behind a shared reference becomes immutable - but
+/// [`ImgIterMut`] has another [`as_mut_ptr`][ImgIterMut::as_mut_ptr] method.
+pub trait ImgAsMutPtr: sealed::SealedAsMutPtr + ImgAsPtr {
+	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
+
+	/// Returns a [`Img`] that mutably points to this one's buffer.
+	fn as_mut_ptr(&self) -> Self::AsMutPtr;
+}
+
 /// Exposes iterators that return `*const` pointers.
 ///
 /// Implemented for buffer pointers, i.e. [`Img<*const [T]>`][Img] and
 /// [`Img<*mut [T]>`][Img].
-pub trait ImgIterPtr: sealed::SealedPtr {
-	type Item;
-	type AsPtr: ImgIterPtr<Item = Self::Item>;
-
-	/// Returns this [`Img`] as with the buffer type converted to a pointer.
-	fn as_ptr(&self) -> Self::AsPtr;
-
+pub trait ImgIterPtr: sealed::SealedPtr + ImgAsPtr {
 	/// Returns an iterator over pointers to the pixels of the specified row.
 	/// row.
 	///
@@ -105,13 +123,7 @@ pub trait ImgIterPtr: sealed::SealedPtr {
 /// Exposes iterators that return `*mut` pointers.
 ///
 /// Implemented for `mut` buffer pointers, i.e. [`Img<*mut [T]>`][Img].
-pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
-	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
-
-	/// Returns this [`Img`] as with the buffer type converted to a mutable
-	/// pointer.
-	fn as_mut_ptr(&mut self) -> Self::AsMutPtr;
-
+pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgAsMutPtr + ImgIterPtr {
 	/// Returns an iterator over `*mut` pointers to the pixels of the specified
 	/// row.
 	///
@@ -125,7 +137,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 	///
 	/// Panics if the specified row is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_row_ptr_mut(&mut self, row: usize) -> IterRowPtrMut<Self::Item> {
+	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterRowPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_row_ptr_mut(row)
 	}
 
@@ -137,7 +149,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 	/// valid for reads and writes for all pixels, and that the pointer remains
 	/// valid for the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_rows_ptr_mut(&mut self) -> IterRowsPtrMut<Self::Item> {
+	unsafe fn iter_rows_ptr_mut(&self) -> IterRowsPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_rows_ptr_mut()
 	}
 
@@ -154,7 +166,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 	///
 	/// Panics if the specified column is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_col_ptr_mut(&mut self, col: usize) -> IterColPtrMut<Self::Item> {
+	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterColPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_col_ptr_mut(col)
 	}
 
@@ -166,7 +178,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 	/// valid for reads and writes for all pixels, and that the pointer remains
 	/// valid for the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_cols_ptr_mut(&mut self) -> IterColsPtrMut<Self::Item> {
+	unsafe fn iter_cols_ptr_mut(&self) -> IterColsPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_cols_ptr_mut()
 	}
 }
@@ -175,7 +187,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgIterPtr {
 ///
 /// Implemented for all ordinary references and owned containers, i.e.
 /// [`Img<&[T]>`][Img].
-pub trait ImgIter: sealed::Sealed + ImgIterPtr {
+pub trait ImgIter: sealed::Sealed + ImgAsPtr {
 	/// Returns an iterator over the pixels of the specified row.
 	///
 	/// # Panics
@@ -201,7 +213,12 @@ pub trait ImgIter: sealed::Sealed + ImgIterPtr {
 ///
 /// Implemented for all mutable references and owned containers, i.e.
 /// [`Img<&mut [T]>`][Img] or [`Img<Vec<T>>`][Img].
-pub trait ImgIterMut: sealed::SealedMut + ImgIter + ImgIterPtrMut {
+pub trait ImgIterMut: sealed::SealedMut + ImgIter {
+	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
+
+	/// Returns an [`Img`] that mutably points to this one's buffer.
+	fn as_mut_ptr(&mut self) -> Self::AsMutPtr;
+
 	/// Returns an iterator over the pixels of the specified row.
 	///
 	/// # Panics
@@ -224,14 +241,20 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter + ImgIterPtrMut {
 }
 
 // @formatter:off
+impl<T> sealed::SealedAsPtr for Img<*const [T]> {}
 impl<T> sealed::SealedPtr for Img<*const [T]> {}
 
+impl<T> sealed::SealedAsPtr for Img<*mut [T]> {}
+impl<T> sealed::SealedAsMutPtr for Img<*mut [T]> {}
 impl<T> sealed::SealedPtr for Img<*mut [T]> {}
 impl<T> sealed::SealedPtrMut for Img<*mut [T]> {}
 
+impl<T> sealed::SealedAsPtr for Img<&[T]> {}
 impl<T> sealed::SealedPtr for Img<&[T]> {}
 impl<T> sealed::Sealed for Img<&[T]> {}
 
+impl<T> sealed::SealedAsPtr for Img<&mut [T]> {}
+impl<T> sealed::SealedAsMutPtr for Img<&mut [T]> {}
 impl<T> sealed::SealedPtr for Img<&mut [T]> {}
 impl<T> sealed::SealedPtrMut for Img<&mut [T]> {}
 impl<T> sealed::Sealed for Img<&mut [T]> {}
@@ -250,15 +273,56 @@ unsafe fn copy_buf_unchecked_mut<T, U>(img: &mut Img<T>, map: impl FnOnce(&mut T
 	Img::new_stride(map(img.buf_mut()), width, height, stride)
 }
 
-impl<T> ImgIterPtr for Img<*const [T]> {
+impl<T> ImgAsPtr for Img<*const [T]> {
 	type Item = T;
-	type AsPtr = Img<*const [T]>;
+	type AsPtr = Self;
 
 	#[inline]
 	fn as_ptr(&self) -> Self::AsPtr {
 		*self
 	}
+}
 
+impl<T> ImgAsPtr for Img<*mut [T]> {
+	type Item = T;
+	type AsPtr = Img<*const [T]>;
+
+	#[inline]
+	fn as_ptr(&self) -> Self::AsPtr {
+		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
+	}
+}
+
+impl<T> ImgAsPtr for Img<&[T]> {
+	type Item = T;
+	type AsPtr = Img<*const [T]>;
+
+	#[inline]
+	fn as_ptr(&self) -> Self::AsPtr {
+		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
+	}
+}
+
+impl<T> ImgAsPtr for Img<&mut [T]> {
+	type Item = T;
+	type AsPtr = Img<*const [T]>;
+
+	#[inline]
+	fn as_ptr(&self) -> Self::AsPtr {
+		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
+	}
+}
+
+impl<T> ImgAsMutPtr for Img<*mut [T]> {
+	type AsMutPtr = Img<*mut [T]>;
+
+	#[inline]
+	fn as_mut_ptr(&self) -> Self::AsMutPtr {
+		*self
+	}
+}
+
+impl<T> ImgIterPtr for Img<*const [T]> {
 	#[inline]
 	unsafe fn iter_row_ptr(&self, row: usize) -> IterRowPtr<Self::Item> {
 		assert!(row < self.height());
@@ -296,46 +360,15 @@ impl<T> ImgIterPtr for Img<*const [T]> {
 	}
 }
 
-impl<T> ImgIterPtr for Img<*mut [T]> {
-	type Item = T;
-	type AsPtr = Img<*const [T]>;
+impl<T> ImgIterPtr for Img<*mut [T]> {}
 
-	#[inline]
-	fn as_ptr(&self) -> Self::AsPtr {
-		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
-	}
-}
+impl<T> ImgIterPtr for Img<&[T]> {}
 
-impl<T> ImgIterPtr for Img<&[T]> {
-	type Item = T;
-	type AsPtr = Img<*const [T]>;
-
-	#[inline]
-	fn as_ptr(&self) -> Self::AsPtr {
-		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
-	}
-}
-
-impl<T> ImgIterPtr for Img<&mut [T]> {
-	type Item = T;
-	type AsPtr = Img<*const [T]>;
-
-	#[inline]
-	fn as_ptr(&self) -> Self::AsPtr {
-		unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) }
-	}
-}
+impl<T> ImgIterPtr for Img<&mut [T]> {}
 
 impl<T> ImgIterPtrMut for Img<*mut [T]> {
-	type AsMutPtr = Img<*mut [T]>;
-
 	#[inline]
-	fn as_mut_ptr(&mut self) -> Self::AsMutPtr {
-		*self
-	}
-
-	#[inline]
-	unsafe fn iter_row_ptr_mut(&mut self, row: usize) -> IterRowPtrMut<Self::Item> {
+	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterRowPtrMut<Self::Item> {
 		assert!(row < self.height());
 
 		let slice = slice_from_raw_parts_mut(
@@ -347,12 +380,12 @@ impl<T> ImgIterPtrMut for Img<*mut [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_rows_ptr_mut(&mut self) -> IterRowsPtrMut<Self::Item> {
+	unsafe fn iter_rows_ptr_mut(&self) -> IterRowsPtrMut<Self::Item> {
 		IterRowsPtrMut(self.clone(), 0..self.height())
 	}
 
 	#[inline]
-	unsafe fn iter_col_ptr_mut(&mut self, col: usize) -> IterColPtrMut<Self::Item> {
+	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterColPtrMut<Self::Item> {
 		assert!(col < self.width());
 
 		// ensure first element is first and last element is last;
@@ -366,17 +399,8 @@ impl<T> ImgIterPtrMut for Img<*mut [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_cols_ptr_mut(&mut self) -> IterColsPtrMut<Self::Item> {
+	unsafe fn iter_cols_ptr_mut(&self) -> IterColsPtrMut<Self::Item> {
 		IterColsPtrMut(self.clone(), 0..self.width())
-	}
-}
-
-impl<T> ImgIterPtrMut for Img<&mut [T]> {
-	type AsMutPtr = Img<*mut [T]>;
-
-	#[inline]
-	fn as_mut_ptr(&mut self) -> Self::AsMutPtr {
-		unsafe { copy_buf_unchecked_mut(self, |buf| *buf as *mut [T]) }
 	}
 }
 
@@ -388,11 +412,7 @@ impl<T> ImgIter for Img<&[T]> {
 
 	#[inline]
 	fn iter_rows(&self) -> IterRows<Self::Item> {
-		IterRows(
-			unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) },
-			0..self.height(),
-			PhantomData
-		)
+		IterRows(self.as_ptr(), 0..self.height(), PhantomData)
 	}
 
 	#[inline]
@@ -402,11 +422,7 @@ impl<T> ImgIter for Img<&[T]> {
 
 	#[inline]
 	fn iter_cols(&self) -> IterCols<Self::Item> {
-		IterCols(
-			unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) },
-			0..self.width(),
-			PhantomData
-		)
+		IterCols(self.as_ptr(), 0..self.width(), PhantomData)
 	}
 }
 
@@ -418,11 +434,7 @@ impl<T> ImgIter for Img<&mut [T]> {
 
 	#[inline]
 	fn iter_rows(&self) -> IterRows<Self::Item> {
-		IterRows(
-			unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) },
-			0..self.height(),
-			PhantomData
-		)
+		IterRows(self.as_ptr(), 0..self.height(), PhantomData)
 	}
 
 	#[inline]
@@ -432,40 +444,35 @@ impl<T> ImgIter for Img<&mut [T]> {
 
 	#[inline]
 	fn iter_cols(&self) -> IterCols<Self::Item> {
-		IterCols(
-			unsafe { copy_buf_unchecked(self, |buf| *buf as *const [T]) },
-			0..self.width(),
-			PhantomData
-		)
+		IterCols(self.as_ptr(), 0..self.width(), PhantomData)
 	}
 }
 
 impl<T> ImgIterMut for Img<&mut [T]> {
+	type AsMutPtr = Img<*mut [T]>;
+
+	#[inline]
+	fn as_mut_ptr(&mut self) -> Self::AsMutPtr {
+		unsafe { copy_buf_unchecked_mut(self, |buf| *buf as *mut [T]) }
+	}
+
 	#[inline]
 	fn iter_row_mut(&mut self, row: usize) -> IterRowMut<Self::Item> {
-		IterRowMut(unsafe { self.iter_row_ptr_mut(row) }, PhantomData)
+		IterRowMut(unsafe { self.as_mut_ptr().iter_row_ptr_mut(row) }, PhantomData)
 	}
 
 	#[inline]
 	fn iter_rows_mut(&mut self) -> IterRowsMut<Self::Item> {
-		IterRowsMut(
-			unsafe { copy_buf_unchecked_mut(self, |buf| *buf as *mut [T]) },
-			0..self.height(),
-			PhantomData
-		)
+		IterRowsMut(self.as_mut_ptr(), 0..self.height(), PhantomData)
 	}
 
 	#[inline]
 	fn iter_col_mut(&mut self, col: usize) -> IterColMut<Self::Item> {
-		IterColMut(unsafe { self.iter_col_ptr_mut(col) }, PhantomData)
+		IterColMut(unsafe { self.as_mut_ptr().iter_col_ptr_mut(col) }, PhantomData)
 	}
 
 	#[inline]
 	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item> {
-		IterColsMut(
-			unsafe { copy_buf_unchecked_mut(self, |buf| *buf as *mut [T]) },
-			0..self.width(),
-			PhantomData
-		)
+		IterColsMut(self.as_mut_ptr(), 0..self.width(), PhantomData)
 	}
 }

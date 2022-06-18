@@ -10,7 +10,7 @@ checksum = "7d6a8cd48d0dc604999b8beacfbfc2f4eb289a52af175029d4f79fb57b80c7d5"
 
 [[package]]
 name = "imgref-iter"
-version = "0.1.1"
+version = "0.2.0"
 dependencies = [
  "imgref",
 ]
