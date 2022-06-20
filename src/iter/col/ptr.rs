@@ -1,27 +1,55 @@
-use std::cmp::min;
 use std::iter::FusedIterator;
 use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
+use imgref::Img;
+use crate::iter::{IterPtr, IterPtrMut};
 
+#[repr(transparent)]
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct IterColPtr<T>(pub(crate) *const [T], pub(crate) usize);
+pub struct IterColPtr<T>(IterPtr<T>);
 
-unsafe impl<T: Sync> Send for IterColPtr<T> {}
+impl<T> IterColPtr<T> {
+	/// Creates a new [`IterColPtr`] over the specified col of a buffer.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided col is out of bounds.
+	///
+	/// # Safety
+	///
+	/// The provided [`Img`] must be valid for the lifetime of the returned
+	/// [`IterColPtr`].
+	#[inline]
+	pub unsafe fn new(buf: &Img<*const [T]>, col: usize) -> Self {
+		assert!(col < buf.width());
+		Self::new_unchecked(buf, col)
+	}
+
+	/// Creates a new [`IterColPtr`] over the specified col of a buffer.
+	///
+	/// # Safety
+	///
+	/// The provided col must not be out of bounds, and the provided [`Img`]
+	/// must be valid for the lifetime of the returned [`IterColPtr`].
+	#[inline]
+	pub unsafe fn new_unchecked(buf: &Img<*const [T]>, col: usize) -> Self {
+		let first = buf.buf().cast::<T>().add(col);
+		let stride = buf.stride();
+		let col = slice_from_raw_parts(first, stride * (buf.height() - 1) + 1);
+		Self(IterPtr::new(col, stride))
+	}
+}
 
 impl<T> Iterator for IterColPtr<T> {
 	type Item = *const T;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		Some(unsafe { (*self.0).len() }).filter(|len| *len > 0).map(|len| {
-			let first = self.0.cast::<T>();
-			self.0 = slice_from_raw_parts(unsafe { first.add(min(self.1, len)) }, len.saturating_sub(self.1));
-			first
-		})
+		unsafe { self.0.next() }
 	}
 
 	#[inline]
 	fn size_hint(&self) -> (usize, Option<usize>) {
-		let len = self.len();
+		let len = unsafe { self.0.len() };
 		(len, Some(len))
 	}
 }
@@ -29,45 +57,66 @@ impl<T> Iterator for IterColPtr<T> {
 impl<T> DoubleEndedIterator for IterColPtr<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		Some(unsafe { (*self.0).len() }).filter(|len| *len > 0).map(|len| {
-			let first = self.0.cast::<T>();
-			self.0 = slice_from_raw_parts(first, len.saturating_sub(self.1));
-			unsafe { first.add(len - 1) }
-		})
+		unsafe { self.0.next_back() }
 	}
 }
 
 impl<T> ExactSizeIterator for IterColPtr<T> {
 	#[inline]
 	fn len(&self) -> usize {
-		unsafe { ((*self.0).len() + (self.1 - 1)) / self.1 }
+		unsafe { self.0.len() }
 	}
 }
 
 impl<T> FusedIterator for IterColPtr<T> {}
 
+#[repr(transparent)]
 #[derive(Clone, Eq, PartialEq, Debug)]
-pub struct IterColPtrMut<T>(pub(crate) *mut [T], pub(crate) usize);
+pub struct IterColPtrMut<T>(IterPtrMut<T>);
 
-unsafe impl<T: Send> Send for IterColPtrMut<T> {}
+impl<T> IterColPtrMut<T> {
+	/// Creates a new [`IterColPtrMut`] over the specified col of a buffer.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided col is out of bounds.
+	///
+	/// # Safety
+	///
+	/// The provided [`Img`] must be valid for the lifetime of the returned
+	/// [`IterColPtrMut`].
+	#[inline]
+	pub unsafe fn new(buf: &Img<*mut [T]>, col: usize) -> Self {
+		assert!(col < buf.width());
+		Self::new_unchecked(buf, col)
+	}
 
-unsafe impl<T: Sync> Sync for IterColPtrMut<T> {}
+	/// Creates a new [`IterColPtrMut`] over the specified col of a buffer.
+	///
+	/// # Safety
+	///
+	/// The provided col must not be out of bounds, and the provided [`Img`]
+	/// must be valid for the lifetime of the returned [`IterColPtrMut`].
+	#[inline]
+	pub unsafe fn new_unchecked(buf: &Img<*mut [T]>, col: usize) -> Self {
+		let first = buf.buf().cast::<T>().add(col);
+		let stride = buf.stride();
+		let col = slice_from_raw_parts_mut(first, stride * (buf.height() - 1) + 1);
+		Self(IterPtrMut::new(col, stride))
+	}
+}
 
 impl<T> Iterator for IterColPtrMut<T> {
 	type Item = *mut T;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		Some(unsafe { (*self.0).len() }).filter(|len| *len > 0).map(|len| {
-			let first = self.0.cast::<T>();
-			self.0 = slice_from_raw_parts_mut(unsafe { first.add(min(self.1, len)) }, len.saturating_sub(self.1));
-			first
-		})
+		unsafe { self.0.next() }
 	}
 
 	#[inline]
 	fn size_hint(&self) -> (usize, Option<usize>) {
-		let len = self.len();
+		let len = unsafe { self.0.len() };
 		(len, Some(len))
 	}
 }
@@ -75,18 +124,14 @@ impl<T> Iterator for IterColPtrMut<T> {
 impl<T> DoubleEndedIterator for IterColPtrMut<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		Some(unsafe { (*self.0).len() }).filter(|len| *len > 0).map(|len| {
-			let first = self.0.cast::<T>();
-			self.0 = slice_from_raw_parts_mut(first, len.saturating_sub(self.1));
-			unsafe { first.add(len - 1) }
-		})
+		unsafe { self.0.next_back() }
 	}
 }
 
 impl<T> ExactSizeIterator for IterColPtrMut<T> {
 	#[inline]
 	fn len(&self) -> usize {
-		unsafe { ((*self.0).len() + (self.1 - 1)) / self.1 }
+		unsafe { self.0.len() }
 	}
 }
 

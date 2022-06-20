@@ -1,12 +1,24 @@
 use std::iter::FusedIterator;
 use std::ops::Range;
 use imgref::Img;
-
-use crate::iter::row::*;
+use crate::iter::{IterRowPtr, IterRowPtrMut};
 use crate::traits::{ImgIterPtr, ImgIterPtrMut};
 
 #[derive(Clone, Debug)]
-pub struct IterRowsPtr<T>(pub(crate) Img<*const [T]>, pub(crate) Range<usize>);
+pub struct IterRowsPtr<T>(Img<*const [T]>, Range<usize>);
+
+impl<T> IterRowsPtr<T> {
+	/// Creates a new [`IterRowsPtr`] over the specified buffer.
+	///
+	/// # Safety
+	///
+	/// The provided buffer must be valid for the lifetime of the returned
+	/// [`IterRowsPtr`].
+	#[inline]
+	pub unsafe fn new(buf: &Img<*const [T]>) -> Self {
+		Self(Img::new_stride(*buf.buf(), buf.width(), buf.height(), buf.stride()), 0..buf.height())
+	}
+}
 
 impl<T> Iterator for IterRowsPtr<T> {
 	type Item = IterRowPtr<T>;
@@ -40,7 +52,20 @@ impl<T> ExactSizeIterator for IterRowsPtr<T> {
 impl<T> FusedIterator for IterRowsPtr<T> {}
 
 #[derive(Clone, Debug)]
-pub struct IterRowsPtrMut<T>(pub(crate) Img<*mut [T]>, pub(crate) Range<usize>);
+pub struct IterRowsPtrMut<T>(Img<*mut [T]>, Range<usize>);
+
+impl<T> IterRowsPtrMut<T> {
+	/// Creates a new [`IterRowsPtrMut`] over the specified buffer.
+	///
+	/// # Safety
+	///
+	/// The provided buffer must be valid for the lifetime of the returned
+	/// [`IterRowsPtrMut`].
+	#[inline]
+	pub unsafe fn new(buf: &Img<*mut [T]>) -> Self {
+		Self(Img::new_stride(*buf.buf(), buf.width(), buf.height(), buf.stride()), 0..buf.height())
+	}
+}
 
 impl<T> Iterator for IterRowsPtrMut<T> {
 	type Item = IterRowPtrMut<T>;

@@ -1,5 +1,9 @@
 //! Contains implementations for all the iterators offered by this crate.
 
+// Iter
+// IterMut
+// IterPtr
+// IterPtrMut
 // IterRow
 // IterRowMut
 // IterRowPtr
@@ -17,11 +21,13 @@
 // IterColsPtr
 // IterColsPtrMut
 
+mod generic;
 mod row;
 mod col;
 mod rows;
 mod cols;
 
+pub use generic::*;
 pub use row::*;
 pub use col::*;
 pub use rows::*;
