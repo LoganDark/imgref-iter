@@ -1,8 +1,7 @@
 use std::iter::FusedIterator;
 use std::ops::Range;
 use imgref::Img;
-use crate::iter::{IterRowPtr, IterRowPtrMut};
-use crate::traits::{ImgIterPtr, ImgIterPtrMut};
+use crate::iter::{IterPtr, IterPtrMut};
 
 #[derive(Clone, Debug)]
 pub struct IterRowsPtr<T>(Img<*const [T]>, Range<usize>);
@@ -15,17 +14,17 @@ impl<T> IterRowsPtr<T> {
 	/// The provided buffer must be valid for the lifetime of the returned
 	/// [`IterRowsPtr`].
 	#[inline]
-	pub unsafe fn new(buf: &Img<*const [T]>) -> Self {
-		Self(Img::new_stride(*buf.buf(), buf.width(), buf.height(), buf.stride()), 0..buf.height())
+	pub unsafe fn new(buf: Img<*const [T]>) -> Self {
+		Self(buf, 0..buf.height())
 	}
 }
 
 impl<T> Iterator for IterRowsPtr<T> {
-	type Item = IterRowPtr<T>;
+	type Item = IterPtr<T>;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		self.1.next().map(|index| unsafe { self.0.iter_row_ptr(index) })
+		self.1.next().map(|row| unsafe { IterPtr::row_ptr(self.0, row) })
 	}
 
 	#[inline]
@@ -38,7 +37,7 @@ impl<T> Iterator for IterRowsPtr<T> {
 impl<T> DoubleEndedIterator for IterRowsPtr<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		self.1.next_back().map(|index| unsafe { self.0.iter_row_ptr(index) })
+		self.1.next_back().map(|row| unsafe { IterPtr::row_ptr(self.0, row) })
 	}
 }
 
@@ -62,17 +61,17 @@ impl<T> IterRowsPtrMut<T> {
 	/// The provided buffer must be valid for the lifetime of the returned
 	/// [`IterRowsPtrMut`].
 	#[inline]
-	pub unsafe fn new(buf: &Img<*mut [T]>) -> Self {
-		Self(Img::new_stride(*buf.buf(), buf.width(), buf.height(), buf.stride()), 0..buf.height())
+	pub unsafe fn new(buf: Img<*mut [T]>) -> Self {
+		Self(buf, 0..buf.height())
 	}
 }
 
 impl<T> Iterator for IterRowsPtrMut<T> {
-	type Item = IterRowPtrMut<T>;
+	type Item = IterPtrMut<T>;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		self.1.next().map(|index| unsafe { self.0.iter_row_ptr_mut(index) })
+		self.1.next().map(|row| unsafe { IterPtrMut::row_ptr(self.0, row) })
 	}
 
 	#[inline]
@@ -85,7 +84,7 @@ impl<T> Iterator for IterRowsPtrMut<T> {
 impl<T> DoubleEndedIterator for IterRowsPtrMut<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		self.1.next_back().map(|index| unsafe { self.0.iter_row_ptr_mut(index) })
+		self.1.next_back().map(|row| unsafe { IterPtrMut::row_ptr(self.0, row) })
 	}
 }
 

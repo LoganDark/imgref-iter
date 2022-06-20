@@ -1,34 +1,42 @@
 use std::iter::FusedIterator;
+use std::marker::PhantomData;
 use std::ops::Range;
 use imgref::Img;
-use crate::iter::{IterCol, IterColMut};
+use crate::iter::{Iter, IterMut};
 
 mod ptr;
 
 pub use ptr::*;
 
-#[derive(Clone, Eq, PartialEq, Debug)]
-pub struct IterCols<'a, T>(Img<&'a [T]>, Range<usize>);
+#[derive(Clone, Debug)]
+pub struct IterCols<'a, T>(Img<*const [T]>, Range<usize>, PhantomData<&'a [T]>);
 
 impl<'a, T> IterCols<'a, T> {
 	/// Creates a new [`IterCols`] over the specified buffer.
 	#[inline]
 	pub fn new<S: AsRef<[T]>>(buf: &'a Img<S>) -> Self {
-		Self(Img::new_stride(buf.buf().as_ref(), buf.width(), buf.height(), buf.stride()), 0..buf.width())
+		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
+		let buf = buf.buf().as_ref() as *const [T];
+		unsafe { Self::new_ptr(Img::new_stride(buf, width, height, stride)) }
+	}
+
+	/// Creates a new [`IterCols`] over the specified buffer.
+	///
+	/// # Safety
+	///
+	/// The provided buffer must be valid for reads.
+	#[inline]
+	pub unsafe fn new_ptr(buf: Img<*const [T]>) -> Self {
+		Self(buf, 0..buf.width(), PhantomData)
 	}
 }
 
 impl<'a, T> Iterator for IterCols<'a, T> {
-	type Item = IterCol<'a, T>;
+	type Item = Iter<'a, T>;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		self.1.next().map(|index| {
-			let height = self.0.height();
-			let stride = self.0.stride();
-			let col = &self.0.buf()[index .. index + (height - 1) * stride + 1];
-			IterCol::new_col(col, stride)
-		})
+		self.1.next().map(|col| unsafe { Iter::col_ptr(self.0, col) })
 	}
 
 	#[inline]
@@ -41,12 +49,7 @@ impl<'a, T> Iterator for IterCols<'a, T> {
 impl<'a, T> DoubleEndedIterator for IterCols<'a, T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		self.1.next_back().map(|index| {
-			let height = self.0.height();
-			let stride = self.0.stride();
-			let col = &self.0.buf()[index .. index + (height - 1) * stride + 1];
-			IterCol::new_col(col, stride)
-		})
+		self.1.next_back().map(|col| unsafe { Iter::col_ptr(self.0, col) })
 	}
 }
 
@@ -59,29 +62,35 @@ impl<'a, T> ExactSizeIterator for IterCols<'a, T> {
 
 impl<'a, T> FusedIterator for IterCols<'a, T> {}
 
-#[derive(Eq, PartialEq, Debug)]
-pub struct IterColsMut<'a, T>(Img<&'a mut [T]>, Range<usize>);
+#[derive(Debug)]
+pub struct IterColsMut<'a, T>(Img<*mut [T]>, Range<usize>, PhantomData<&'a [T]>);
 
 impl<'a, T> IterColsMut<'a, T> {
-	/// Creates a new [`IterCols`] over the specified buffer.
+	/// Creates a new [`IterColsMut`] over the specified buffer.
 	#[inline]
 	pub fn new<S: AsMut<[T]>>(buf: &'a mut Img<S>) -> Self {
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
-		Self(Img::new_stride(buf.buf_mut().as_mut(), width, height, stride), 0..width)
+		let buf = buf.buf_mut().as_mut() as *mut [T];
+		unsafe { Self::new_ptr(Img::new_stride(buf, width, height, stride)) }
+	}
+
+	/// Creates a new [`IterColsMut`] over the specified buffer.
+	///
+	/// # Safety
+	///
+	/// The provided buffer must be valid for reads.
+	#[inline]
+	pub unsafe fn new_ptr(buf: Img<*mut [T]>) -> Self {
+		Self(buf, 0..buf.width(), PhantomData)
 	}
 }
 
 impl<'a, T> Iterator for IterColsMut<'a, T> {
-	type Item = IterColMut<'a, T>;
+	type Item = IterMut<'a, T>;
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		self.1.next().map(|index| {
-			let height = self.0.height();
-			let stride = self.0.stride();
-			let col = unsafe { &mut *(&mut self.0.buf_mut()[index .. index + (height - 1) * stride + 1] as *mut [T]) };
-			IterColMut::new_col(col, stride)
-		})
+		self.1.next().map(|col| unsafe { IterMut::col_ptr(self.0, col) })
 	}
 
 	#[inline]
@@ -94,12 +103,7 @@ impl<'a, T> Iterator for IterColsMut<'a, T> {
 impl<'a, T> DoubleEndedIterator for IterColsMut<'a, T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		self.1.next_back().map(|index| {
-			let height = self.0.height();
-			let stride = self.0.stride();
-			let col = unsafe { &mut *(&mut self.0.buf_mut()[index .. index + (height - 1) * stride + 1] as *mut [T]) };
-			IterColMut::new_col(col, stride)
-		})
+		self.1.next_back().map(|col| unsafe { IterMut::col_ptr(self.0, col) })
 	}
 }
 

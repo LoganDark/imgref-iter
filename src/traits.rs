@@ -3,18 +3,14 @@
 use imgref::Img;
 
 use crate::iter::{
-	IterRow,
-	IterRowMut,
-	IterRowPtr,
-	IterRowPtrMut,
+	Iter,
+	IterMut,
+	IterPtr,
+	IterPtrMut,
 	IterRows,
 	IterRowsMut,
 	IterRowsPtr,
 	IterRowsPtrMut,
-	IterCol,
-	IterColMut,
-	IterColPtr,
-	IterColPtrMut,
 	IterCols,
 	IterColsMut,
 	IterColsPtr,
@@ -73,11 +69,11 @@ pub trait ImgIterPtr: sealed::SealedPtr + ImgAsPtr {
 	///
 	/// Panics if the specified row is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_row_ptr(&self, row: usize) -> IterRowPtr<Self::Item> {
+	unsafe fn iter_row_ptr(&self, row: usize) -> IterPtr<Self::Item> {
 		self.as_ptr().iter_row_ptr(row)
 	}
 
-	/// Returns an iterator over [`IterRowPtr`]s.
+	/// Returns an iterator over [`IterPtr`]s.
 	///
 	/// # Safety
 	///
@@ -101,11 +97,11 @@ pub trait ImgIterPtr: sealed::SealedPtr + ImgAsPtr {
 	///
 	/// Panics if the specified column is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_col_ptr(&self, col: usize) -> IterColPtr<Self::Item> {
+	unsafe fn iter_col_ptr(&self, col: usize) -> IterPtr<Self::Item> {
 		self.as_ptr().iter_col_ptr(col)
 	}
 
-	/// Returns an iterator over [`IterColPtr`]s.
+	/// Returns an iterator over [`IterPtr`]s.
 	///
 	/// # Safety
 	///
@@ -135,11 +131,11 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgAsMutPtr + ImgIterPtr {
 	///
 	/// Panics if the specified row is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterRowPtrMut<Self::Item> {
+	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_row_ptr_mut(row)
 	}
 
-	/// Returns an iterator over [`IterRowPtrMut`]s.
+	/// Returns an iterator over [`IterPtrMut`]s.
 	///
 	/// # Safety
 	///
@@ -164,11 +160,11 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgAsMutPtr + ImgIterPtr {
 	///
 	/// Panics if the specified column is out of bounds for the [`Img`].
 	#[inline]
-	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterColPtrMut<Self::Item> {
+	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_col_ptr_mut(col)
 	}
 
-	/// Returns an iterator over [`IterColPtrMut`]s.
+	/// Returns an iterator over [`IterPtrMut`]s.
 	///
 	/// # Safety
 	///
@@ -191,9 +187,9 @@ pub trait ImgIter: sealed::Sealed + ImgAsPtr {
 	/// # Panics
 	///
 	/// Panics if the specified row is out of bounds for the [`Img`].
-	fn iter_row(&self, row: usize) -> IterRow<Self::Item>;
+	fn iter_row(&self, row: usize) -> Iter<Self::Item>;
 
-	/// Returns an iterator over [`IterRow`]s.
+	/// Returns an iterator over rows.
 	fn iter_rows(&self) -> IterRows<Self::Item>;
 
 	/// Returns an iterator over the pixels of the specified column.
@@ -201,9 +197,9 @@ pub trait ImgIter: sealed::Sealed + ImgAsPtr {
 	/// # Panics
 	///
 	/// Panics if the specified column is out of bounds for the [`Img`].
-	fn iter_col(&self, col: usize) -> IterCol<Self::Item>;
+	fn iter_col(&self, col: usize) -> Iter<Self::Item>;
 
-	/// Returns an iterator over [`IterCol`]s.
+	/// Returns an iterator over columns.
 	fn iter_cols(&self) -> IterCols<Self::Item>;
 }
 
@@ -222,9 +218,9 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 	/// # Panics
 	///
 	/// Panics if the specified row is out of bounds for the [`Img`].
-	fn iter_row_mut(&mut self, row: usize) -> IterRowMut<Self::Item>;
+	fn iter_row_mut(&mut self, row: usize) -> IterMut<Self::Item>;
 
-	/// Returns an iterator over [`IterRowMut`]s.
+	/// Returns an iterator over [`IterMut`]s.
 	fn iter_rows_mut(&mut self) -> IterRowsMut<Self::Item>;
 
 	/// Returns an iterator over the pixels of the specified column.
@@ -232,9 +228,9 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 	/// # Panics
 	///
 	/// Panics if the specified column is out of bounds for the [`Img`].
-	fn iter_col_mut(&mut self, col: usize) -> IterColMut<Self::Item>;
+	fn iter_col_mut(&mut self, col: usize) -> IterMut<Self::Item>;
 
-	/// Returns an iterator over [`IterColMut`]s.
+	/// Returns an iterator over [`IterMut`]s.
 	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item>;
 }
 
@@ -322,23 +318,23 @@ impl<T> ImgAsMutPtr for Img<*mut [T]> {
 
 impl<T> ImgIterPtr for Img<*const [T]> {
 	#[inline]
-	unsafe fn iter_row_ptr(&self, row: usize) -> IterRowPtr<Self::Item> {
-		IterRowPtr::new(self, row)
+	unsafe fn iter_row_ptr(&self, row: usize) -> IterPtr<Self::Item> {
+		IterPtr::row_ptr(*self, row)
 	}
 
 	#[inline]
 	unsafe fn iter_rows_ptr(&self) -> IterRowsPtr<Self::Item> {
-		IterRowsPtr::new(self)
+		IterRowsPtr::new(*self)
 	}
 
 	#[inline]
-	unsafe fn iter_col_ptr(&self, col: usize) -> IterColPtr<Self::Item> {
-		IterColPtr::new(self, col)
+	unsafe fn iter_col_ptr(&self, col: usize) -> IterPtr<Self::Item> {
+		IterPtr::col_ptr(*self, col)
 	}
 
 	#[inline]
 	unsafe fn iter_cols_ptr(&self) -> IterColsPtr<Self::Item> {
-		IterColsPtr::new(self)
+		IterColsPtr::new(*self)
 	}
 }
 
@@ -350,30 +346,30 @@ impl<T> ImgIterPtr for Img<&mut [T]> {}
 
 impl<T> ImgIterPtrMut for Img<*mut [T]> {
 	#[inline]
-	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterRowPtrMut<Self::Item> {
-		IterRowPtrMut::new(self, row)
+	unsafe fn iter_row_ptr_mut(&self, row: usize) -> IterPtrMut<Self::Item> {
+		IterPtrMut::row_ptr(*self, row)
 	}
 
 	#[inline]
 	unsafe fn iter_rows_ptr_mut(&self) -> IterRowsPtrMut<Self::Item> {
-		IterRowsPtrMut::new(self)
+		IterRowsPtrMut::new(*self)
 	}
 
 	#[inline]
-	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterColPtrMut<Self::Item> {
-		IterColPtrMut::new(self, col)
+	unsafe fn iter_col_ptr_mut(&self, col: usize) -> IterPtrMut<Self::Item> {
+		IterPtrMut::col_ptr(*self, col)
 	}
 
 	#[inline]
 	unsafe fn iter_cols_ptr_mut(&self) -> IterColsPtrMut<Self::Item> {
-		IterColsPtrMut::new(self)
+		IterColsPtrMut::new(*self)
 	}
 }
 
 impl<T> ImgIter for Img<&[T]> {
 	#[inline]
-	fn iter_row(&self, row: usize) -> IterRow<Self::Item> {
-		IterRow::new(self, row)
+	fn iter_row(&self, row: usize) -> Iter<Self::Item> {
+		Iter::row(self, row)
 	}
 
 	#[inline]
@@ -382,8 +378,8 @@ impl<T> ImgIter for Img<&[T]> {
 	}
 
 	#[inline]
-	fn iter_col(&self, col: usize) -> IterCol<Self::Item> {
-		IterCol::new(self, col)
+	fn iter_col(&self, col: usize) -> Iter<Self::Item> {
+		Iter::col(self, col)
 	}
 
 	#[inline]
@@ -394,8 +390,8 @@ impl<T> ImgIter for Img<&[T]> {
 
 impl<T> ImgIter for Img<&mut [T]> {
 	#[inline]
-	fn iter_row(&self, row: usize) -> IterRow<Self::Item> {
-		IterRow::new(self, row)
+	fn iter_row(&self, row: usize) -> Iter<Self::Item> {
+		Iter::row(self, row)
 	}
 
 	#[inline]
@@ -404,8 +400,8 @@ impl<T> ImgIter for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_col(&self, col: usize) -> IterCol<Self::Item> {
-		IterCol::new(self, col)
+	fn iter_col(&self, col: usize) -> Iter<Self::Item> {
+		Iter::col(self, col)
 	}
 
 	#[inline]
@@ -423,8 +419,8 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_row_mut(&mut self, row: usize) -> IterRowMut<Self::Item> {
-		IterRowMut::new(self, row)
+	fn iter_row_mut(&mut self, row: usize) -> IterMut<Self::Item> {
+		IterMut::row(self, row)
 	}
 
 	#[inline]
@@ -433,8 +429,8 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_col_mut(&mut self, col: usize) -> IterColMut<Self::Item> {
-		IterColMut::new(self, col)
+	fn iter_col_mut(&mut self, col: usize) -> IterMut<Self::Item> {
+		IterMut::col(self, col)
 	}
 
 	#[inline]
