@@ -16,7 +16,11 @@
 mod generic;
 mod rows;
 mod cols;
+#[cfg(feature = "simd")]
+mod simd;
 
 pub use generic::*;
 pub use rows::*;
 pub use cols::*;
+#[cfg(feature = "simd")]
+pub use simd::*;

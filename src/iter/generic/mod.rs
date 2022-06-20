@@ -148,6 +148,11 @@ impl<'a, T> Iter<'a, T> {
 
 		Self::new_ptr_unchecked(slice, buf.stride())
 	}
+
+	/// Converts this [`Iter`] into its inner [`IterPtr`].
+	pub fn into_inner(self) -> IterPtr<T> {
+		self.0
+	}
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
@@ -321,6 +326,11 @@ impl<'a, T> IterMut<'a, T> {
 		};
 
 		Self::new_ptr_unchecked(slice, buf.stride())
+	}
+
+	/// Converts this [`IterMut`] into its inner [`IterPtrMut`].
+	pub fn into_inner(self) -> IterPtrMut<T> {
+		self.0
 	}
 }
 

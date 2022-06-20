@@ -17,6 +17,14 @@ use crate::iter::{
 	IterColsPtrMut
 };
 
+#[cfg(feature = "simd")]
+use crate::iter::{
+	SimdIter,
+	SimdIterMut,
+	SimdIterPtr,
+	SimdIterPtrMut
+};
+
 mod sealed {
 	pub trait SealedAsPtr {}
 
@@ -29,12 +37,29 @@ mod sealed {
 	pub trait Sealed {}
 
 	pub trait SealedMut {}
+
+	#[cfg(feature = "simd")]
+	pub trait SealedSimdPtr {}
+
+	#[cfg(feature = "simd")]
+	pub trait SealedSimdPtrMut {}
+
+	#[cfg(feature = "simd")]
+	pub trait SealedSimd {}
+
+	#[cfg(feature = "simd")]
+	pub trait SealedSimdMut {}
 }
 
 /// The trait for images whose buffers can be converted to a `*const` pointer.
 pub trait ImgAsPtr: sealed::SealedAsPtr {
 	type Item;
+
+	#[cfg(not(feature = "simd"))]
 	type AsPtr: ImgIterPtr<Item = Self::Item>;
+
+	#[cfg(feature = "simd")]
+	type AsPtr: ImgIterPtr<Item = Self::Item> + ImgSimdIterPtr;
 
 	/// Returns an [`Img`] that points to this one's buffer.
 	fn as_ptr(&self) -> Self::AsPtr;
@@ -45,7 +70,11 @@ pub trait ImgAsPtr: sealed::SealedAsPtr {
 /// mutable reference behind a shared reference becomes immutable - but
 /// [`ImgIterMut`] has another [`as_mut_ptr`][ImgIterMut::as_mut_ptr] method.
 pub trait ImgAsMutPtr: sealed::SealedAsMutPtr + ImgAsPtr {
+	#[cfg(not(feature = "simd"))]
 	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
+
+	#[cfg(feature = "simd")]
+	type AsMutPtr: ImgIterPtrMut<Item = Self::Item> + ImgSimdIterPtrMut;
 
 	/// Returns a [`Img`] that mutably points to this one's buffer.
 	fn as_mut_ptr(&self) -> Self::AsMutPtr;
@@ -234,6 +263,127 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item>;
 }
 
+/// Exposes iterators that return arrays of `*const` pointers.
+///
+/// Implemented for buffer pointers, i.e. [`Img<*const [T]>`][Img] and
+/// [`Img<*mut [T]>`][Img].
+#[cfg(feature = "simd")]
+pub trait ImgSimdIterPtr: sealed::SealedSimdPtr + ImgIterPtr {
+	/// Returns an iterator over pointers to the pixels of the specified row.
+	/// row.
+	///
+	/// # Safety
+	///
+	/// The caller must ensure that the pointer contained by the [`Img`] is
+	/// valid for reads from all pixels of the specified row, and that the
+	/// pointer remains valid for the lifetime of the iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified row is out of bounds for the [`Img`].
+	#[inline]
+	unsafe fn simd_iter_rows_ptr<const LANES: usize>(&self, row: usize) -> SimdIterPtr<Self::Item, LANES> {
+		self.as_ptr().simd_iter_rows_ptr::<LANES>(row)
+	}
+
+	/// Returns an iterator over pointers to the pixels of the specified column.
+	///
+	/// # Safety
+	///
+	/// The caller must ensure that the pointer contained by the [`Img`] is
+	/// valid for reads from all pixels of the specified column, and that the
+	/// pointer remains valid for the lifetime of the iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified column is out of bounds for the [`Img`].
+	#[inline]
+	unsafe fn simd_iter_cols_ptr<const LANES: usize>(&self, col: usize) -> SimdIterPtr<Self::Item, LANES> {
+		self.as_ptr().simd_iter_cols_ptr::<LANES>(col)
+	}
+}
+
+/// Exposes iterators that return arrays of `*mut` pointers.
+///
+/// Implemented for `mut` buffer pointers, i.e. [`Img<*mut [T]>`][Img].
+#[cfg(feature = "simd")]
+pub trait ImgSimdIterPtrMut: sealed::SealedSimdPtrMut + ImgSimdIterPtr + ImgIterPtrMut {
+	/// Returns an iterator over pointers to the pixels of the specified row.
+	/// row.
+	///
+	/// # Safety
+	///
+	/// The caller must ensure that the pointer contained by the [`Img`] is
+	/// valid for reads from all pixels of the specified row, and that the
+	/// pointer remains valid for the lifetime of the iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified row is out of bounds for the [`Img`].
+	#[inline]
+	unsafe fn simd_iter_rows_ptr_mut<const LANES: usize>(&self, row: usize) -> SimdIterPtrMut<Self::Item, LANES> {
+		self.as_mut_ptr().simd_iter_rows_ptr_mut::<LANES>(row)
+	}
+
+	/// Returns an iterator over pointers to the pixels of the specified column.
+	///
+	/// # Safety
+	///
+	/// The caller must ensure that the pointer contained by the [`Img`] is
+	/// valid for reads from all pixels of the specified column, and that the
+	/// pointer remains valid for the lifetime of the iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified column is out of bounds for the [`Img`].
+	#[inline]
+	unsafe fn simd_iter_cols_ptr_mut<const LANES: usize>(&self, col: usize) -> SimdIterPtrMut<Self::Item, LANES> {
+		self.as_mut_ptr().simd_iter_cols_ptr_mut::<LANES>(col)
+	}
+}
+
+/// Exposes iterators that return arrays of `&` references.
+///
+/// Implemented for all ordinary references and owned containers, i.e.
+/// [`Img<&[T]>`][Img].
+#[cfg(feature = "simd")]
+pub trait ImgSimdIter: sealed::SealedSimd + ImgIter {
+	/// Returns an iterator over the pixels of the specified row.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified row is out of bounds for the [`Img`].
+	fn simd_iter_rows<const LANES: usize>(&self, row: usize) -> SimdIter<Self::Item, LANES>;
+
+	/// Returns an iterator over the pixels of the specified column.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified column is out of bounds for the [`Img`].
+	fn simd_iter_cols<const LANES: usize>(&self, col: usize) -> SimdIter<Self::Item, LANES>;
+}
+
+/// Exposes iterators that return arrays of `&mut` references.
+///
+/// Implemented for all mutable references and owned containers, i.e.
+/// [`Img<&mut [T]>`][Img] or [`Img<Vec<T>>`][Img].
+#[cfg(feature = "simd")]
+pub trait ImgSimdIterMut: sealed::SealedSimdMut + ImgIterMut {
+	/// Returns an iterator over the pixels of the specified row.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified row is out of bounds for the [`Img`].
+	fn simd_iter_rows_mut<const LANES: usize>(&mut self, row: usize) -> SimdIterMut<Self::Item, LANES>;
+
+	/// Returns an iterator over the pixels of the specified column.
+	///
+	/// # Panics
+	///
+	/// Panics if the specified column is out of bounds for the [`Img`].
+	fn simd_iter_cols_mut<const LANES: usize>(&mut self, col: usize) -> SimdIterMut<Self::Item, LANES>;
+}
+
 // @formatter:off
 impl<T> sealed::SealedAsPtr for Img<*const [T]> {}
 impl<T> sealed::SealedPtr for Img<*const [T]> {}
@@ -250,9 +400,20 @@ impl<T> sealed::Sealed for Img<&[T]> {}
 impl<T> sealed::SealedAsPtr for Img<&mut [T]> {}
 impl<T> sealed::SealedAsMutPtr for Img<&mut [T]> {}
 impl<T> sealed::SealedPtr for Img<&mut [T]> {}
-impl<T> sealed::SealedPtrMut for Img<&mut [T]> {}
 impl<T> sealed::Sealed for Img<&mut [T]> {}
 impl<T> sealed::SealedMut for Img<&mut [T]> {}
+
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<*const [T]> {}
+
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<*mut [T]> {}
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtrMut for Img<*mut [T]> {}
+
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<&[T]> {}
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimd for Img<&[T]> {}
+
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<&mut [T]> {}
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimd for Img<&mut [T]> {}
+#[cfg(feature = "simd")] impl<T> sealed::SealedSimdMut for Img<&mut [T]> {}
 // @formatter:on
 
 #[inline]
@@ -436,5 +597,73 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	#[inline]
 	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item> {
 		IterColsMut::new(self)
+	}
+}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterPtr for Img<*const [T]> {
+	#[inline]
+	unsafe fn simd_iter_rows_ptr<const LANES: usize>(&self, row: usize) -> SimdIterPtr<Self::Item, LANES> {
+		SimdIterPtr::rows_ptr(*self, row)
+	}
+
+	#[inline]
+	unsafe fn simd_iter_cols_ptr<const LANES: usize>(&self, col: usize) -> SimdIterPtr<Self::Item, LANES> {
+		SimdIterPtr::cols_ptr(*self, col)
+	}
+}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterPtr for Img<*mut [T]> {}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterPtr for Img<&[T]> {}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterPtr for Img<&mut [T]> {}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterPtrMut for Img<*mut [T]> {
+	#[inline]
+	unsafe fn simd_iter_rows_ptr_mut<const LANES: usize>(&self, row: usize) -> SimdIterPtrMut<Self::Item, LANES> {
+		SimdIterPtrMut::rows_ptr(*self, row)
+	}
+
+	#[inline]
+	unsafe fn simd_iter_cols_ptr_mut<const LANES: usize>(&self, col: usize) -> SimdIterPtrMut<Self::Item, LANES> {
+		SimdIterPtrMut::cols_ptr(*self, col)
+	}
+}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIter for Img<&[T]> {
+	fn simd_iter_rows<const LANES: usize>(&self, row: usize) -> SimdIter<Self::Item, LANES> {
+		SimdIter::rows(self, row)
+	}
+
+	fn simd_iter_cols<const LANES: usize>(&self, col: usize) -> SimdIter<Self::Item, LANES> {
+		SimdIter::cols(self, col)
+	}
+}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIter for Img<&mut [T]> {
+	fn simd_iter_rows<const LANES: usize>(&self, row: usize) -> SimdIter<Self::Item, LANES> {
+		SimdIter::rows(self, row)
+	}
+
+	fn simd_iter_cols<const LANES: usize>(&self, col: usize) -> SimdIter<Self::Item, LANES> {
+		SimdIter::cols(self, col)
+	}
+}
+
+#[cfg(feature = "simd")]
+impl<T> ImgSimdIterMut for Img<&mut [T]> {
+	fn simd_iter_rows_mut<const LANES: usize>(&mut self, row: usize) -> SimdIterMut<Self::Item, LANES> {
+		SimdIterMut::rows(self, row)
+	}
+
+	fn simd_iter_cols_mut<const LANES: usize>(&mut self, col: usize) -> SimdIterMut<Self::Item, LANES> {
+		SimdIterMut::cols(self, col)
 	}
 }
