@@ -6,6 +6,9 @@ use crate::iter::{IterPtr, IterPtrMut};
 #[derive(Clone, Debug)]
 pub struct IterColsPtr<T>(Img<*const [T]>, Range<usize>);
 
+unsafe impl<T: Sync> Send for IterColsPtr<T> {}
+unsafe impl<T: Sync> Sync for IterColsPtr<T> {}
+
 impl<T> IterColsPtr<T> {
 	/// Creates a new [`IterColsPtr`] over the specified buffer.
 	///
@@ -52,6 +55,9 @@ impl<T> FusedIterator for IterColsPtr<T> {}
 
 #[derive(Clone, Debug)]
 pub struct IterColsPtrMut<T>(Img<*mut [T]>, Range<usize>);
+
+unsafe impl<T: Send> Send for IterColsPtrMut<T> {}
+unsafe impl<T: Sync> Sync for IterColsPtrMut<T> {}
 
 impl<T> IterColsPtrMut<T> {
 	/// Creates a new [`IterColsPtrMut`] over the specified buffer.
