@@ -12,6 +12,16 @@ pub use ptr::*;
 pub struct Iter<'a, T>(IterPtr<T>, PhantomData<&'a [T]>);
 
 impl<'a, T> Iter<'a, T> {
+	/// Wraps an [`IterPtr`] in an [`Iter`].
+	///
+	/// # Safety
+	///
+	/// The [`IterPtr`] must be valid for reads and shared references.
+	#[inline]
+	pub unsafe fn wrap(ptr: IterPtr<T>) -> Self {
+		Self(ptr, PhantomData)
+	}
+
 	/// Creates a new [`Iter`] over the specified slice and stride.
 	///
 	/// # Panics
@@ -58,7 +68,7 @@ impl<'a, T> Iter<'a, T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new_ptr_unchecked(slice: *const [T], stride: usize) -> Self {
-		Self(IterPtr::new(slice, stride), PhantomData)
+		Self::wrap(IterPtr::new(slice, stride))
 	}
 
 	/// Creates a new [`Iter`] over the specified buffer row.
@@ -191,6 +201,16 @@ impl<'a, T> FusedIterator for Iter<'a, T> {}
 pub struct IterMut<'a, T>(IterPtrMut<T>, PhantomData<&'a mut [T]>);
 
 impl<'a, T> IterMut<'a, T> {
+	/// Wraps an [`IterPtrMut`] in an [`IterMut`].
+	///
+	/// # Safety
+	///
+	/// The [`IterPtrMut`] must be valid for reads and shared references.
+	#[inline]
+	pub unsafe fn wrap(ptr: IterPtrMut<T>) -> Self {
+		Self(ptr, PhantomData)
+	}
+
 	/// Creates a new [`Iter`] over the specified slice and stride.
 	///
 	/// # Panics
@@ -237,7 +257,7 @@ impl<'a, T> IterMut<'a, T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new_ptr_unchecked(slice: *mut [T], stride: usize) -> Self {
-		Self(IterPtrMut::new(slice, stride), PhantomData)
+		Self::wrap(IterPtrMut::new(slice, stride))
 	}
 
 	/// Creates a new [`Iter`] over the specified buffer row.

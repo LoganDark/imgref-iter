@@ -4,23 +4,17 @@
 // IterMut
 // IterPtr
 // IterPtrMut
-// IterRows
-// IterRowsMut
-// IterRowsPtr
-// IterRowsPtrMut
-// IterCols
-// IterColsMut
-// IterColsPtr
-// IterColsPtrMut
+// IterWindows
+// IterWindowsMut
+// IterWindowsPtr
+// IterWindowsPtrMut
 
 mod generic;
-mod rows;
-mod cols;
+mod windows;
 #[cfg(feature = "simd")]
 mod simd;
 
 pub use generic::*;
-pub use rows::*;
-pub use cols::*;
+pub use windows::*;
 #[cfg(feature = "simd")]
 pub use simd::*;

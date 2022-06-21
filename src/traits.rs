@@ -7,14 +7,10 @@ use crate::iter::{
 	IterMut,
 	IterPtr,
 	IterPtrMut,
-	IterRows,
-	IterRowsMut,
-	IterRowsPtr,
-	IterRowsPtrMut,
-	IterCols,
-	IterColsMut,
-	IterColsPtr,
-	IterColsPtrMut
+	IterWindows,
+	IterWindowsMut,
+	IterWindowsPtr,
+	IterWindowsPtrMut
 };
 
 #[cfg(feature = "simd")]
@@ -110,7 +106,7 @@ pub trait ImgIterPtr: sealed::SealedPtr + ImgAsPtr {
 	/// valid for reads from all pixels, and that the pointer remains valid for
 	/// the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_rows_ptr(&self) -> IterRowsPtr<Self::Item> {
+	unsafe fn iter_rows_ptr(&self) -> IterWindowsPtr<Self::Item> {
 		self.as_ptr().iter_rows_ptr()
 	}
 
@@ -138,7 +134,7 @@ pub trait ImgIterPtr: sealed::SealedPtr + ImgAsPtr {
 	/// valid for reads from all pixels, and that the pointer remains valid for
 	/// the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_cols_ptr(&self) -> IterColsPtr<Self::Item> {
+	unsafe fn iter_cols_ptr(&self) -> IterWindowsPtr<Self::Item> {
 		self.as_ptr().iter_cols_ptr()
 	}
 }
@@ -172,7 +168,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgAsMutPtr + ImgIterPtr {
 	/// valid for reads and writes for all pixels, and that the pointer remains
 	/// valid for the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_rows_ptr_mut(&self) -> IterRowsPtrMut<Self::Item> {
+	unsafe fn iter_rows_ptr_mut(&self) -> IterWindowsPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_rows_ptr_mut()
 	}
 
@@ -201,7 +197,7 @@ pub trait ImgIterPtrMut: sealed::SealedPtrMut + ImgAsMutPtr + ImgIterPtr {
 	/// valid for reads and writes for all pixels, and that the pointer remains
 	/// valid for the lifetime of the iterator.
 	#[inline]
-	unsafe fn iter_cols_ptr_mut(&self) -> IterColsPtrMut<Self::Item> {
+	unsafe fn iter_cols_ptr_mut(&self) -> IterWindowsPtrMut<Self::Item> {
 		self.as_mut_ptr().iter_cols_ptr_mut()
 	}
 }
@@ -219,7 +215,7 @@ pub trait ImgIter: sealed::Sealed + ImgAsPtr {
 	fn iter_row(&self, row: usize) -> Iter<Self::Item>;
 
 	/// Returns an iterator over rows.
-	fn iter_rows(&self) -> IterRows<Self::Item>;
+	fn iter_rows(&self) -> IterWindows<Self::Item>;
 
 	/// Returns an iterator over the pixels of the specified column.
 	///
@@ -229,7 +225,7 @@ pub trait ImgIter: sealed::Sealed + ImgAsPtr {
 	fn iter_col(&self, col: usize) -> Iter<Self::Item>;
 
 	/// Returns an iterator over columns.
-	fn iter_cols(&self) -> IterCols<Self::Item>;
+	fn iter_cols(&self) -> IterWindows<Self::Item>;
 }
 
 /// Exposes iterators that return `&mut` references.
@@ -250,7 +246,7 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 	fn iter_row_mut(&mut self, row: usize) -> IterMut<Self::Item>;
 
 	/// Returns an iterator over [`IterMut`]s.
-	fn iter_rows_mut(&mut self) -> IterRowsMut<Self::Item>;
+	fn iter_rows_mut(&mut self) -> IterWindowsMut<Self::Item>;
 
 	/// Returns an iterator over the pixels of the specified column.
 	///
@@ -260,7 +256,7 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 	fn iter_col_mut(&mut self, col: usize) -> IterMut<Self::Item>;
 
 	/// Returns an iterator over [`IterMut`]s.
-	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item>;
+	fn iter_cols_mut(&mut self) -> IterWindowsMut<Self::Item>;
 }
 
 /// Exposes iterators that return arrays of `*const` pointers.
@@ -484,8 +480,8 @@ impl<T> ImgIterPtr for Img<*const [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_rows_ptr(&self) -> IterRowsPtr<Self::Item> {
-		IterRowsPtr::new(*self)
+	unsafe fn iter_rows_ptr(&self) -> IterWindowsPtr<Self::Item> {
+		IterWindowsPtr::rows_ptr(*self)
 	}
 
 	#[inline]
@@ -494,8 +490,8 @@ impl<T> ImgIterPtr for Img<*const [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_cols_ptr(&self) -> IterColsPtr<Self::Item> {
-		IterColsPtr::new(*self)
+	unsafe fn iter_cols_ptr(&self) -> IterWindowsPtr<Self::Item> {
+		IterWindowsPtr::cols_ptr(*self)
 	}
 }
 
@@ -512,8 +508,8 @@ impl<T> ImgIterPtrMut for Img<*mut [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_rows_ptr_mut(&self) -> IterRowsPtrMut<Self::Item> {
-		IterRowsPtrMut::new(*self)
+	unsafe fn iter_rows_ptr_mut(&self) -> IterWindowsPtrMut<Self::Item> {
+		IterWindowsPtrMut::rows_ptr(*self)
 	}
 
 	#[inline]
@@ -522,8 +518,8 @@ impl<T> ImgIterPtrMut for Img<*mut [T]> {
 	}
 
 	#[inline]
-	unsafe fn iter_cols_ptr_mut(&self) -> IterColsPtrMut<Self::Item> {
-		IterColsPtrMut::new(*self)
+	unsafe fn iter_cols_ptr_mut(&self) -> IterWindowsPtrMut<Self::Item> {
+		IterWindowsPtrMut::cols_ptr(*self)
 	}
 }
 
@@ -534,8 +530,8 @@ impl<T> ImgIter for Img<&[T]> {
 	}
 
 	#[inline]
-	fn iter_rows(&self) -> IterRows<Self::Item> {
-		IterRows::new(self)
+	fn iter_rows(&self) -> IterWindows<Self::Item> {
+		IterWindows::rows(self)
 	}
 
 	#[inline]
@@ -544,8 +540,8 @@ impl<T> ImgIter for Img<&[T]> {
 	}
 
 	#[inline]
-	fn iter_cols(&self) -> IterCols<Self::Item> {
-		IterCols::new(self)
+	fn iter_cols(&self) -> IterWindows<Self::Item> {
+		IterWindows::cols(self)
 	}
 }
 
@@ -556,8 +552,8 @@ impl<T> ImgIter for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_rows(&self) -> IterRows<Self::Item> {
-		IterRows::new(self)
+	fn iter_rows(&self) -> IterWindows<Self::Item> {
+		IterWindows::rows(self)
 	}
 
 	#[inline]
@@ -566,8 +562,8 @@ impl<T> ImgIter for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_cols(&self) -> IterCols<Self::Item> {
-		IterCols::new(self)
+	fn iter_cols(&self) -> IterWindows<Self::Item> {
+		IterWindows::cols(self)
 	}
 }
 
@@ -585,8 +581,8 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_rows_mut(&mut self) -> IterRowsMut<Self::Item> {
-		IterRowsMut::new(self)
+	fn iter_rows_mut(&mut self) -> IterWindowsMut<Self::Item> {
+		IterWindowsMut::rows(self)
 	}
 
 	#[inline]
@@ -595,8 +591,8 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	}
 
 	#[inline]
-	fn iter_cols_mut(&mut self) -> IterColsMut<Self::Item> {
-		IterColsMut::new(self)
+	fn iter_cols_mut(&mut self) -> IterWindowsMut<Self::Item> {
+		IterWindowsMut::cols(self)
 	}
 }
 
