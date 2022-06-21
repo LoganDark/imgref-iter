@@ -12,7 +12,8 @@ pub use ptr::*;
 pub struct IterRows<'a, T>(Img<*const [T]>, Range<usize>, PhantomData<&'a [T]>);
 
 unsafe impl<'a, T: Sync> Send for IterRows<'a, T> {}
-unsafe impl<'a, T: Sync> Sync for IterRows<'a, T> {}
+
+unsafe impl<'a, T> Sync for IterRows<'a, T> {}
 
 impl<'a, T> IterRows<'a, T> {
 	/// Creates a new [`IterRows`] over the specified buffer.
@@ -69,7 +70,8 @@ impl<'a, T> FusedIterator for IterRows<'a, T> {}
 pub struct IterRowsMut<'a, T>(Img<*mut [T]>, Range<usize>, PhantomData<&'a [T]>);
 
 unsafe impl<'a, T: Send> Send for IterRowsMut<'a, T> {}
-unsafe impl<'a, T: Sync> Sync for IterRowsMut<'a, T> {}
+
+unsafe impl<'a, T> Sync for IterRowsMut<'a, T> {}
 
 impl<'a, T> IterRowsMut<'a, T> {
 	/// Creates a new [`IterRowsMut`] over the specified buffer.

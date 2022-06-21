@@ -7,7 +7,7 @@ pub struct IterPtr<T>(*const [T], usize);
 
 unsafe impl<T: Sync> Send for IterPtr<T> {}
 
-unsafe impl<T: Sync> Sync for IterPtr<T> {}
+unsafe impl<T> Sync for IterPtr<T> {}
 
 impl IterPtr<()> {
 	/// This crate's iterators are double-ended, so there must be an element on
@@ -248,7 +248,7 @@ pub struct IterPtrMut<T>(*mut [T], usize);
 
 unsafe impl<T: Send> Send for IterPtrMut<T> {}
 
-unsafe impl<T: Sync> Sync for IterPtrMut<T> {}
+unsafe impl<T> Sync for IterPtrMut<T> {}
 
 impl<T> IterPtrMut<T> {
 	/// Creates a new [`IterPtrMut`] over the specified slice and stride.
