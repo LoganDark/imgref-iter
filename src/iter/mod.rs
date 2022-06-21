@@ -8,6 +8,10 @@
 // IterWindowsMut
 // IterWindowsPtr
 // IterWindowsPtrMut
+// SimdIter
+// SimdIterMut
+// SimdIterPtr
+// SimdIterPtrMut
 
 mod generic;
 mod windows;
