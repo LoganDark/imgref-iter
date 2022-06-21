@@ -7,6 +7,7 @@ mod ptr;
 
 pub use ptr::*;
 
+#[repr(transparent)]
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct IterWindows<'a, T>(IterWindowsPtr<T>, PhantomData<&'a [T]>);
 
@@ -22,11 +23,13 @@ impl<'a, T> IterWindows<'a, T> {
 	}
 
 	/// Creates a new [`IterWindows`] over the rows of an [`Img`].
+	#[inline]
 	pub fn rows<S: AsRef<[T]>>(buf: &'a Img<S>) -> Self {
 		unsafe { Self::wrap(IterWindowsPtr::rows(buf)) }
 	}
 
 	/// Creates a new [`IterWindows`] over the cols of an [`Img`].
+	#[inline]
 	pub fn cols<S: AsRef<[T]>>(buf: &'a Img<S>) -> Self {
 		unsafe { Self::wrap(IterWindowsPtr::cols(buf)) }
 	}
@@ -63,6 +66,7 @@ impl<'a, T> ExactSizeIterator for IterWindows<'a, T> {
 
 impl<'a, T> FusedIterator for IterWindows<'a, T> {}
 
+#[repr(transparent)]
 #[derive(Eq, PartialEq, Debug)]
 pub struct IterWindowsMut<'a, T>(IterWindowsPtrMut<T>, PhantomData<&'a mut [T]>);
 
@@ -78,11 +82,13 @@ impl<'a, T> IterWindowsMut<'a, T> {
 	}
 
 	/// Creates a new [`IterWindowsMut`] over the rows of an [`Img`].
+	#[inline]
 	pub fn rows<S: AsMut<[T]>>(buf: &'a mut Img<S>) -> Self {
 		unsafe { Self::wrap(IterWindowsPtrMut::rows(buf)) }
 	}
 
 	/// Creates a new [`IterWindowsMut`] over the cols of an [`Img`].
+	#[inline]
 	pub fn cols<S: AsMut<[T]>>(buf: &'a mut Img<S>) -> Self {
 		unsafe { Self::wrap(IterWindowsPtrMut::cols(buf)) }
 	}

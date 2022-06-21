@@ -414,6 +414,7 @@ impl<T> IterPtrMut<T> {
 impl<T> Iterator for IterPtrMut<T> {
 	type Item = *mut T;
 
+	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
 		let len = unsafe { (*self.0).len() };
 
@@ -432,6 +433,7 @@ impl<T> Iterator for IterPtrMut<T> {
 		}
 	}
 
+	#[inline]
 	fn size_hint(&self) -> (usize, Option<usize>) {
 		let len = self.len();
 		(len, Some(len))
@@ -439,6 +441,7 @@ impl<T> Iterator for IterPtrMut<T> {
 }
 
 impl<T> DoubleEndedIterator for IterPtrMut<T> {
+	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
 		let len = unsafe { (*self.0).len() };
 
@@ -459,6 +462,7 @@ impl<T> DoubleEndedIterator for IterPtrMut<T> {
 }
 
 impl<T> ExactSizeIterator for IterPtrMut<T> {
+	#[inline]
 	fn len(&self) -> usize {
 		let len = unsafe { (*self.0).len() };
 		(len + (self.1 - 1)) / self.1

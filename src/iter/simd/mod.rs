@@ -7,6 +7,7 @@ mod ptr;
 
 pub use ptr::*;
 
+#[repr(transparent)]
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct SimdIter<'a, T, const LANES: usize>(SimdIterPtr<T, LANES>, PhantomData<&'a [T]>);
 
@@ -21,6 +22,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// # Safety
 	///
 	/// The given gap must be valid.
+	#[inline]
 	pub unsafe fn new(iter: Iter<'a, T>, gap: usize) -> Self {
 		Self(SimdIterPtr::new(iter.into_inner(), gap), PhantomData)
 	}
@@ -34,6 +36,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// # Safety
 	///
 	/// The given iterator must be valid and the gap must be valid.
+	#[inline]
 	pub unsafe fn new_ptr(iter: IterPtr<T>, gap: usize) -> Self {
 		Self(SimdIterPtr::new(iter, gap), PhantomData)
 	}
@@ -115,6 +118,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	}
 
 	/// Converts this [`SimdIter`] into its inner [`SimdIterPtr`].
+	#[inline]
 	pub fn into_inner(self) -> SimdIterPtr<T, LANES> {
 		self.0
 	}
@@ -123,22 +127,26 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 impl<'a, T, const LANES: usize> Iterator for SimdIter<'a, T, LANES> {
 	type Item = [&'a T; LANES];
 
+	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
 		self.0.next().map(|arr| arr.map(|ptr| unsafe { &*ptr }))
 	}
 
+	#[inline]
 	fn size_hint(&self) -> (usize, Option<usize>) {
 		self.0.size_hint()
 	}
 }
 
 impl<'a, T, const LANES: usize> DoubleEndedIterator for SimdIter<'a, T, LANES> {
+	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
 		self.0.next_back().map(|arr| arr.map(|ptr| unsafe { &*ptr }))
 	}
 }
 
 impl<'a, T, const LANES: usize> ExactSizeIterator for SimdIter<'a, T, LANES> {
+	#[inline]
 	fn len(&self) -> usize {
 		self.0.len()
 	}
@@ -146,6 +154,7 @@ impl<'a, T, const LANES: usize> ExactSizeIterator for SimdIter<'a, T, LANES> {
 
 impl<'a, T, const LANES: usize> FusedIterator for SimdIter<'a, T, LANES> {}
 
+#[repr(transparent)]
 #[derive(Eq, PartialEq, Debug)]
 pub struct SimdIterMut<'a, T, const LANES: usize>(SimdIterPtrMut<T, LANES>, PhantomData<&'a mut [T]>);
 
@@ -160,6 +169,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// # Safety
 	///
 	/// The given gap must be valid.
+	#[inline]
 	pub unsafe fn new(iter: IterMut<'a, T>, gap: usize) -> Self {
 		Self(SimdIterPtrMut::new(iter.into_inner(), gap), PhantomData)
 	}
@@ -173,6 +183,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// # Safety
 	///
 	/// The given iterator must be valid and the gap must be valid.
+	#[inline]
 	pub unsafe fn new_ptr(iter: IterPtrMut<T>, gap: usize) -> Self {
 		Self(SimdIterPtrMut::new(iter, gap), PhantomData)
 	}
@@ -254,6 +265,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	}
 
 	/// Converts this [`SimdIterMut`] into its inner [`SimdIterPtrMut`].
+	#[inline]
 	pub fn into_inner(self) -> SimdIterPtrMut<T, LANES> {
 		self.0
 	}
@@ -262,22 +274,26 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 impl<'a, T, const LANES: usize> Iterator for SimdIterMut<'a, T, LANES> {
 	type Item = [&'a mut T; LANES];
 
+	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
 		self.0.next().map(|arr| arr.map(|ptr| unsafe { &mut *ptr }))
 	}
 
+	#[inline]
 	fn size_hint(&self) -> (usize, Option<usize>) {
 		self.0.size_hint()
 	}
 }
 
 impl<'a, T, const LANES: usize> DoubleEndedIterator for SimdIterMut<'a, T, LANES> {
+	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
 		self.0.next_back().map(|arr| arr.map(|ptr| unsafe { &mut *ptr }))
 	}
 }
 
 impl<'a, T, const LANES: usize> ExactSizeIterator for SimdIterMut<'a, T, LANES> {
+	#[inline]
 	fn len(&self) -> usize {
 		self.0.len()
 	}
