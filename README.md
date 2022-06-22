@@ -27,6 +27,12 @@ As well as two utility traits for converting to `Img<*const [T]>` or
   it exists for the purpose of documenting why it cannot be implemented for
   `Img<&mut [T]>`.
 
+Additionally, when the (experimental!) `simd` feature is enabled, there are four
+more traits - `ImgSimdIter`, `ImgSimdIterMut`, `ImgSimdIterPtr`, and
+`ImgSimdIterPtrMut`. These allow creating iterators over *multiple* rows or
+columns of an image at once. They don't actually depend on SIMD or a nightly
+compiler - they just return multiple items at once.
+
 Methods on `ImgIterPtr` and `ImgIterPtrMut` are `unsafe` because they offset on
 the provided pointers. `ImgIter` and `ImgIterMut` cannot include safe versions
 because the pointer iterators may outlive the references.
