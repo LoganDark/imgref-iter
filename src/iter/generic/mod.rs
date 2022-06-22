@@ -205,7 +205,7 @@ impl<'a, T> IterMut<'a, T> {
 	///
 	/// # Safety
 	///
-	/// The [`IterPtrMut`] must be valid for reads and shared references.
+	/// The [`IterPtrMut`] must be valid for reads and writes.
 	#[inline]
 	pub unsafe fn wrap(ptr: IterPtrMut<T>) -> Self {
 		Self(ptr, PhantomData)

@@ -13,6 +13,16 @@ pub struct SimdIter<'a, T, const LANES: usize>(SimdIterPtr<T, LANES>, PhantomDat
 
 #[allow(clippy::missing_safety_doc)]
 impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
+	/// Wraps a [`SimdIterPtr`] in a [`SimdIter`].
+	///
+	/// # Safety
+	///
+	/// The [`SimdIterPtr`] must be valid for reads and shared references.
+	#[inline]
+	pub unsafe fn wrap(ptr: SimdIterPtr<T, LANES>) -> Self {
+		Self(ptr, PhantomData)
+	}
+
 	/// Creates a new [`SimdIter`] from the given [`Iter`] and gap.
 	///
 	/// The gap is the distance between successive items in the returned arrays.
@@ -24,7 +34,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// The given gap must be valid.
 	#[inline]
 	pub unsafe fn new(iter: Iter<'a, T>, gap: usize) -> Self {
-		Self(SimdIterPtr::new(iter.into_inner(), gap), PhantomData)
+		Self::wrap(SimdIterPtr::new(iter.into_inner(), gap))
 	}
 
 	/// Creates a new [`SimdIter`] from the given [`IterPtr`] and gap.
@@ -38,7 +48,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// The given iterator must be valid and the gap must be valid.
 	#[inline]
 	pub unsafe fn new_ptr(iter: IterPtr<T>, gap: usize) -> Self {
-		Self(SimdIterPtr::new(iter, gap), PhantomData)
+		Self::wrap(SimdIterPtr::new(iter, gap))
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` rows.
@@ -48,7 +58,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub fn rows<S: AsRef<[T]>>(buf: &Img<S>, row: usize) -> Self {
-		Self(unsafe { SimdIterPtr::rows(buf, row) }, PhantomData)
+		unsafe { Self::wrap(SimdIterPtr::rows(buf, row)) }
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` rows.
@@ -63,7 +73,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*const [T]>, row: usize) -> Self {
-		Self(SimdIterPtr::rows_ptr(buf, row), PhantomData)
+		Self::wrap(SimdIterPtr::rows_ptr(buf, row))
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` rows.
@@ -76,7 +86,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// The caller must ensure that `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr_unchecked(buf: Img<*const [T]>, row: usize) -> Self {
-		Self(SimdIterPtr::rows_ptr_unchecked(buf, row), PhantomData)
+		Self::wrap(SimdIterPtr::rows_ptr_unchecked(buf, row))
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` cols.
@@ -86,7 +96,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub fn cols<S: AsRef<[T]>>(buf: &Img<S>, col: usize) -> Self {
-		Self(unsafe { SimdIterPtr::cols(buf, col) }, PhantomData)
+		unsafe { Self::wrap(SimdIterPtr::cols(buf, col)) }
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` cols.
@@ -101,7 +111,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*const [T]>, col: usize) -> Self {
-		Self(SimdIterPtr::cols_ptr(buf, col), PhantomData)
+		Self::wrap(SimdIterPtr::cols_ptr(buf, col))
 	}
 
 	/// Creates a new [`SimdIter`] across `LANES` cols.
@@ -114,7 +124,7 @@ impl<'a, T, const LANES: usize> SimdIter<'a, T, LANES> {
 	/// The caller must ensure that `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr_unchecked(buf: Img<*const [T]>, col: usize) -> Self {
-		Self(SimdIterPtr::cols_ptr_unchecked(buf, col), PhantomData)
+		Self::wrap(SimdIterPtr::cols_ptr_unchecked(buf, col))
 	}
 
 	/// Converts this [`SimdIter`] into its inner [`SimdIterPtr`].
@@ -160,6 +170,16 @@ pub struct SimdIterMut<'a, T, const LANES: usize>(SimdIterPtrMut<T, LANES>, Phan
 
 #[allow(clippy::missing_safety_doc)]
 impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
+	/// Wraps a [`SimdIterPtrMut`] in a [`SimdIterMut`].
+	///
+	/// # Safety
+	///
+	/// The [`SimdIterPtrMut`] must be valid for reads and writes.
+	#[inline]
+	pub unsafe fn wrap(ptr: SimdIterPtrMut<T, LANES>) -> Self {
+		Self(ptr, PhantomData)
+	}
+
 	/// Creates a new [`SimdIterMut`] from the given [`Iter`] and gap.
 	///
 	/// The gap is the distance between successive items in the returned arrays.
@@ -171,7 +191,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// The given gap must be valid.
 	#[inline]
 	pub unsafe fn new(iter: IterMut<'a, T>, gap: usize) -> Self {
-		Self(SimdIterPtrMut::new(iter.into_inner(), gap), PhantomData)
+		Self::wrap(SimdIterPtrMut::new(iter.into_inner(), gap))
 	}
 
 	/// Creates a new [`SimdIterMut`] from the given [`IterPtr`] and gap.
@@ -185,7 +205,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// The given iterator must be valid and the gap must be valid.
 	#[inline]
 	pub unsafe fn new_ptr(iter: IterPtrMut<T>, gap: usize) -> Self {
-		Self(SimdIterPtrMut::new(iter, gap), PhantomData)
+		Self::wrap(SimdIterPtrMut::new(iter, gap))
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` rows.
@@ -195,7 +215,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub fn rows<S: AsMut<[T]>>(buf: &mut Img<S>, row: usize) -> Self {
-		Self(unsafe { SimdIterPtrMut::rows(buf, row) }, PhantomData)
+		unsafe { Self::wrap(SimdIterPtrMut::rows(buf, row)) }
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` rows.
@@ -210,7 +230,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*mut [T]>, row: usize) -> Self {
-		Self(SimdIterPtrMut::rows_ptr(buf, row), PhantomData)
+		Self::wrap(SimdIterPtrMut::rows_ptr(buf, row))
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` rows.
@@ -223,7 +243,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// The caller must ensure that `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr_unchecked(buf: Img<*mut [T]>, row: usize) -> Self {
-		Self(SimdIterPtrMut::rows_ptr_unchecked(buf, row), PhantomData)
+		Self::wrap(SimdIterPtrMut::rows_ptr_unchecked(buf, row))
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` cols.
@@ -233,7 +253,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub fn cols<S: AsMut<[T]>>(buf: &mut Img<S>, col: usize) -> Self {
-		Self(unsafe { SimdIterPtrMut::cols(buf, col) }, PhantomData)
+		unsafe { Self::wrap(SimdIterPtrMut::cols(buf, col)) }
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` cols.
@@ -248,7 +268,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*mut [T]>, col: usize) -> Self {
-		Self(SimdIterPtrMut::cols_ptr(buf, col), PhantomData)
+		Self::wrap(SimdIterPtrMut::cols_ptr(buf, col))
 	}
 
 	/// Creates a new [`SimdIterMut`] across `LANES` cols.
@@ -261,7 +281,7 @@ impl<'a, T, const LANES: usize> SimdIterMut<'a, T, LANES> {
 	/// The caller must ensure that `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr_unchecked(buf: Img<*mut [T]>, col: usize) -> Self {
-		Self(SimdIterPtrMut::cols_ptr_unchecked(buf, col), PhantomData)
+		Self::wrap(SimdIterPtrMut::cols_ptr_unchecked(buf, col))
 	}
 
 	/// Converts this [`SimdIterMut`] into its inner [`SimdIterPtrMut`].

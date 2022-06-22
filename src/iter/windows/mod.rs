@@ -75,7 +75,7 @@ impl<'a, T> IterWindowsMut<'a, T> {
 	///
 	/// # Safety
 	///
-	/// The [`IterWindowsPtrMut`] must be valid for reads and shared references.
+	/// The [`IterWindowsPtrMut`] must be valid for reads and writes.
 	#[inline]
 	pub unsafe fn wrap(ptr: IterWindowsPtrMut<T>) -> Self {
 		Self(ptr, PhantomData)
