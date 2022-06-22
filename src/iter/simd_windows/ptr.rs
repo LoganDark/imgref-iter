@@ -48,12 +48,12 @@ impl<T, const LANES: usize> SimdIterWindowsPtr<T, LANES> {
 		Self::new_unchecked(slice, slice_stride, iter_stride, len)
 	}
 
-	/// Same as [`new`], but does not verify the slice length.
+	/// Same as `new`, but does not verify the slice length.
 	///
 	/// # Safety
 	///
-	/// All safety invariants of [`new`] must be upheld, and the slice must
-	/// start and end on an element.
+	/// All safety invariants of `new` must be upheld, and the slice must start
+	/// and end on an element.
 	#[inline]
 	pub unsafe fn new_unchecked(slice: *const [T], slice_stride: usize, iter_stride: usize, len: usize) -> Self {
 		Self(slice, slice_stride, iter_stride, 0..len)
@@ -223,12 +223,12 @@ impl<T, const LANES: usize> SimdIterWindowsPtrMut<T, LANES> {
 		Self::new_unchecked(slice, slice_stride, iter_stride, len)
 	}
 
-	/// Same as [`new`], but does not verify the slice length.
+	/// Same as `new`, but does not verify the slice length.
 	///
 	/// # Safety
 	///
-	/// All safety invariants of [`new`] must be upheld, and the slice must
-	/// start and end on an element.
+	/// All safety invariants of `new` must be upheld, and the slice must start
+	/// and end on an element.
 	#[inline]
 	pub unsafe fn new_unchecked(slice: *mut [T], slice_stride: usize, iter_stride: usize, len: usize) -> Self {
 		Self(slice, slice_stride, iter_stride, 0..len)

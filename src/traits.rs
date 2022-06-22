@@ -13,7 +13,7 @@ use crate::iter::{
 	IterWindowsPtrMut
 };
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 use crate::iter::{
 	SimdIter,
 	SimdIterMut,
@@ -23,6 +23,14 @@ use crate::iter::{
 	SimdIterWindowsMut,
 	SimdIterWindowsPtr,
 	SimdIterWindowsPtrMut,
+};
+
+#[cfg(doc)]
+use crate::iter::{
+	SimdIterWindow,
+	SimdIterWindowMut,
+	SimdIterWindowPtr,
+	SimdIterWindowPtrMut
 };
 
 mod sealed {
@@ -38,16 +46,16 @@ mod sealed {
 
 	pub trait SealedMut {}
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	pub trait SealedSimdPtr {}
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	pub trait SealedSimdPtrMut {}
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	pub trait SealedSimd {}
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	pub trait SealedSimdMut {}
 }
 
@@ -55,10 +63,10 @@ mod sealed {
 pub trait ImgAsPtr: sealed::SealedAsPtr {
 	type Item;
 
-	#[cfg(not(feature = "simd"))]
+	#[cfg(not(any(doc, feature = "simd")))]
 	type AsPtr: ImgIterPtr<Item = Self::Item>;
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	type AsPtr: ImgIterPtr<Item = Self::Item> + ImgSimdIterPtr;
 
 	/// Returns an [`Img`] that points to this one's buffer.
@@ -70,10 +78,10 @@ pub trait ImgAsPtr: sealed::SealedAsPtr {
 /// mutable reference behind a shared reference becomes immutable - but
 /// [`ImgIterMut`] has another [`as_mut_ptr`][ImgIterMut::as_mut_ptr] method.
 pub trait ImgAsMutPtr: sealed::SealedAsMutPtr + ImgAsPtr {
-	#[cfg(not(feature = "simd"))]
+	#[cfg(not(any(doc, feature = "simd")))]
 	type AsMutPtr: ImgIterPtrMut<Item = Self::Item>;
 
-	#[cfg(feature = "simd")]
+	#[cfg(any(doc, feature = "simd"))]
 	type AsMutPtr: ImgIterPtrMut<Item = Self::Item> + ImgSimdIterPtrMut;
 
 	/// Returns a [`Img`] that mutably points to this one's buffer.
@@ -267,7 +275,7 @@ pub trait ImgIterMut: sealed::SealedMut + ImgIter {
 ///
 /// Implemented for buffer pointers, i.e. [`Img<*const [T]>`][Img] and
 /// [`Img<*mut [T]>`][Img].
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub trait ImgSimdIterPtr: sealed::SealedSimdPtr + ImgIterPtr {
 	/// Returns an iterator over pointers to the pixels of the specified row.
 	/// row.
@@ -330,7 +338,7 @@ pub trait ImgSimdIterPtr: sealed::SealedSimdPtr + ImgIterPtr {
 /// Exposes iterators that return arrays of `*mut` pointers.
 ///
 /// Implemented for `mut` buffer pointers, i.e. [`Img<*mut [T]>`][Img].
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub trait ImgSimdIterPtrMut: sealed::SealedSimdPtrMut + ImgSimdIterPtr + ImgIterPtrMut {
 	/// Returns an iterator over pointers to the pixels of the specified row.
 	/// row.
@@ -394,7 +402,7 @@ pub trait ImgSimdIterPtrMut: sealed::SealedSimdPtrMut + ImgSimdIterPtr + ImgIter
 ///
 /// Implemented for all ordinary references and owned containers, i.e.
 /// [`Img<&[T]>`][Img].
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub trait ImgSimdIter: sealed::SealedSimd + ImgIter {
 	/// Returns an iterator over the pixels of the specified row.
 	///
@@ -421,7 +429,7 @@ pub trait ImgSimdIter: sealed::SealedSimd + ImgIter {
 ///
 /// Implemented for all mutable references and owned containers, i.e.
 /// [`Img<&mut [T]>`][Img] or [`Img<Vec<T>>`][Img].
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub trait ImgSimdIterMut: sealed::SealedSimdMut + ImgIterMut {
 	/// Returns an iterator over the pixels of the specified row.
 	///
@@ -463,17 +471,17 @@ impl<T> sealed::SealedPtr for Img<&mut [T]> {}
 impl<T> sealed::Sealed for Img<&mut [T]> {}
 impl<T> sealed::SealedMut for Img<&mut [T]> {}
 
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<*const [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdPtr for Img<*const [T]> {}
 
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<*mut [T]> {}
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtrMut for Img<*mut [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdPtr for Img<*mut [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdPtrMut for Img<*mut [T]> {}
 
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<&[T]> {}
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimd for Img<&[T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdPtr for Img<&[T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimd for Img<&[T]> {}
 
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdPtr for Img<&mut [T]> {}
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimd for Img<&mut [T]> {}
-#[cfg(feature = "simd")] impl<T> sealed::SealedSimdMut for Img<&mut [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdPtr for Img<&mut [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimd for Img<&mut [T]> {}
+#[cfg(any(doc, feature = "simd"))] impl<T> sealed::SealedSimdMut for Img<&mut [T]> {}
 // @formatter:on
 
 #[inline]
@@ -660,7 +668,7 @@ impl<T> ImgIterMut for Img<&mut [T]> {
 	}
 }
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterPtr for Img<*const [T]> {
 	#[inline]
 	unsafe fn simd_iter_row_ptr<const LANES: usize>(&self, row: usize) -> SimdIterPtr<Self::Item, LANES> {
@@ -683,16 +691,16 @@ impl<T> ImgSimdIterPtr for Img<*const [T]> {
 	}
 }
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterPtr for Img<*mut [T]> {}
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterPtr for Img<&[T]> {}
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterPtr for Img<&mut [T]> {}
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterPtrMut for Img<*mut [T]> {
 	#[inline]
 	unsafe fn simd_iter_row_ptr_mut<const LANES: usize>(&self, row: usize) -> SimdIterPtrMut<Self::Item, LANES> {
@@ -715,7 +723,7 @@ impl<T> ImgSimdIterPtrMut for Img<*mut [T]> {
 	}
 }
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIter for Img<&[T]> {
 	#[inline]
 	fn simd_iter_row<const LANES: usize>(&self, row: usize) -> SimdIter<Self::Item, LANES> {
@@ -738,7 +746,7 @@ impl<T> ImgSimdIter for Img<&[T]> {
 	}
 }
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIter for Img<&mut [T]> {
 	#[inline]
 	fn simd_iter_row<const LANES: usize>(&self, row: usize) -> SimdIter<Self::Item, LANES> {
@@ -761,7 +769,7 @@ impl<T> ImgSimdIter for Img<&mut [T]> {
 	}
 }
 
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 impl<T> ImgSimdIterMut for Img<&mut [T]> {
 	#[inline]
 	fn simd_iter_row_mut<const LANES: usize>(&mut self, row: usize) -> SimdIterMut<Self::Item, LANES> {

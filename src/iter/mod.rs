@@ -15,14 +15,14 @@
 
 mod generic;
 mod windows;
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 mod simd;
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 mod simd_windows;
 
 pub use generic::*;
 pub use windows::*;
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub use simd::*;
-#[cfg(feature = "simd")]
+#[cfg(any(doc, feature = "simd"))]
 pub use simd_windows::*;
