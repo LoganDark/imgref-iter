@@ -47,9 +47,13 @@ impl<T, const LANES: usize> SimdIterPtr<T, LANES> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*const [T]>, row: usize) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		assert!(row + LANES <= buf.height());
 		Self::rows_ptr_unchecked(buf, row)
 	}
@@ -95,9 +99,13 @@ impl<T, const LANES: usize> SimdIterPtr<T, LANES> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*const [T]>, col: usize) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		assert!(col + LANES <= buf.width());
 		Self::cols_ptr_unchecked(buf, col)
 	}
@@ -202,9 +210,13 @@ impl<T, const LANES: usize> SimdIterPtrMut<T, LANES> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given `row + LANES > buf.height()`.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*mut [T]>, row: usize) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		assert!(row + LANES <= buf.height());
 		Self::rows_ptr_unchecked(buf, row)
 	}
@@ -250,9 +262,13 @@ impl<T, const LANES: usize> SimdIterPtrMut<T, LANES> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given `col + LANES > buf.width()`.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*mut [T]>, col: usize) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		assert!(col + LANES <= buf.width());
 		Self::cols_ptr_unchecked(buf, col)
 	}

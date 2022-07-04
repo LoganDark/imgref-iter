@@ -22,6 +22,24 @@ impl IterPtr<()> {
 	pub(crate) fn is_slice_perfect(len: usize, stride: usize) -> bool {
 		len == 0 || stride == 1 || len % stride == 1
 	}
+
+	/// It's possible to construct `Img`s with any dimensions over any slice,
+	/// which means the slice might not have enough elements, even if the `Img`
+	/// says it does.
+	///
+	/// If the slice has enough elements, does nothing. Else, panics with a
+	/// descriptive message.
+	#[doc(hidden)]
+	#[inline(always)]
+	pub(crate) fn assert_slice_enough<T>(img: Img<*const [T]>) {
+		let (width, height, stride) = (img.width(), img.height(), img.stride());
+		let needed = stride * (height - 1) + width;
+		let got = unsafe { (**img.buf()).len() };
+
+		if got < needed {
+			panic!("image (with width {width}, height {height} and stride {stride}) backing buffer too short; needed {needed} elements, but only got {got}");
+		}
+	}
 }
 
 impl<T> IterPtr<T> {
@@ -110,9 +128,13 @@ impl<T> IterPtr<T> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given row is out of bounds.
 	#[inline]
 	pub unsafe fn row_ptr(buf: Img<*const [T]>, row: usize) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		assert!(row < buf.height());
 		Self::row_ptr_unchecked(buf, row)
 	}
@@ -159,9 +181,13 @@ impl<T> IterPtr<T> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given col is out of bounds.
 	#[inline]
 	pub unsafe fn col_ptr(buf: Img<*const [T]>, col: usize) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		assert!(col < buf.width());
 		Self::col_ptr_unchecked(buf, col)
 	}
@@ -250,6 +276,15 @@ unsafe impl<T: Send> Send for IterPtrMut<T> {}
 
 unsafe impl<T> Sync for IterPtrMut<T> {}
 
+impl IterPtrMut<()> {
+	#[doc(hidden)]
+	#[inline(always)]
+	pub(crate) fn assert_slice_enough<T>(img: Img<*mut [T]>) {
+		use crate::traits::ImgAsPtr;
+		IterPtr::assert_slice_enough(img.as_ptr())
+	}
+}
+
 impl<T> IterPtrMut<T> {
 	/// Creates a new [`IterPtrMut`] over the specified slice and stride.
 	///
@@ -336,9 +371,13 @@ impl<T> IterPtrMut<T> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given row is out of bounds.
 	#[inline]
 	pub unsafe fn row_ptr(buf: Img<*mut [T]>, row: usize) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		assert!(row < buf.height());
 		Self::row_ptr_unchecked(buf, row)
 	}
@@ -385,9 +424,13 @@ impl<T> IterPtrMut<T> {
 	///
 	/// # Panics
 	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
+	///
 	/// Panics if the given col is out of bounds.
 	#[inline]
 	pub unsafe fn col_ptr(buf: Img<*mut [T]>, col: usize) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		assert!(col < buf.width());
 		Self::col_ptr_unchecked(buf, col)
 	}

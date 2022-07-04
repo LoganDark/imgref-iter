@@ -64,6 +64,11 @@ impl<T> IterWindowsPtr<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn rows<S: AsRef<[T]>>(buf: &Img<S>) -> Self {
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
@@ -76,8 +81,14 @@ impl<T> IterWindowsPtr<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*const [T]>) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
 		let first_row = slice_from_raw_parts(buf.buf().cast::<T>(), width);
 		Self::new_unchecked(first_row, 1, stride, height)
@@ -88,6 +99,11 @@ impl<T> IterWindowsPtr<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn cols<S: AsRef<[T]>>(buf: &Img<S>) -> Self {
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
@@ -100,8 +116,14 @@ impl<T> IterWindowsPtr<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*const [T]>) -> Self {
+		IterPtr::assert_slice_enough(buf);
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
 		let first_col = slice_from_raw_parts(buf.buf().cast::<T>(), stride * (height - 1) + 1);
 		Self::new_unchecked(first_col, buf.stride(), 1, width)
@@ -206,6 +228,11 @@ impl<T> IterWindowsPtrMut<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn rows<S: AsMut<[T]>>(buf: &mut Img<S>) -> Self {
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
@@ -218,8 +245,14 @@ impl<T> IterWindowsPtrMut<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn rows_ptr(buf: Img<*mut [T]>) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
 		let first_row = slice_from_raw_parts_mut(buf.buf().cast::<T>(), width);
 		Self::new_unchecked(first_row, 1, stride, height)
@@ -230,6 +263,11 @@ impl<T> IterWindowsPtrMut<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn cols<S: AsMut<[T]>>(buf: &mut Img<S>) -> Self {
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
@@ -242,8 +280,14 @@ impl<T> IterWindowsPtrMut<T> {
 	/// # Safety
 	///
 	/// The buffer must be valid for the lifetime of the returned iterator.
+	///
+	/// # Panics
+	///
+	/// Panics if the provided buffer has a width and height too large to fit in
+	/// its backing store.
 	#[inline]
 	pub unsafe fn cols_ptr(buf: Img<*mut [T]>) -> Self {
+		IterPtrMut::assert_slice_enough(buf);
 		let (width, height, stride) = (buf.width(), buf.height(), buf.stride());
 		let first_col = slice_from_raw_parts_mut(buf.buf().cast::<T>(), stride * (height - 1) + 1);
 		Self::new_unchecked(first_col, buf.stride(), 1, width)
