@@ -38,6 +38,8 @@ impl IterPtr<()> {
 
 		if got < needed {
 			panic!("image (with width {width}, height {height} and stride {stride}) backing buffer too short; needed {needed} elements, but only got {got}");
+		} else if width > stride {
+			panic!("image (with width {width}, height {height} and stride {stride}) width is greater than stride")
 		}
 	}
 }
