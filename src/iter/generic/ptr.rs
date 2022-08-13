@@ -1,6 +1,7 @@
 use std::cmp::min;
 use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use imgref::Img;
+use crate::{slice_ptr_len, slice_ptr_len_mut};
 
 #[derive(Copy, Clone, Eq, PartialEq, Debug)]
 pub struct IterPtr<T>(*const [T], usize);
@@ -34,7 +35,7 @@ impl IterPtr<()> {
 	pub(crate) fn assert_slice_enough<T>(img: Img<*const [T]>) {
 		let (width, height, stride) = (img.width(), img.height(), img.stride());
 		let needed = stride * (height - 1) + width;
-		let got = unsafe { (**img.buf()).len() };
+		let got = unsafe { slice_ptr_len(*img.buf()) };
 
 		if got < needed {
 			panic!("image (with width {width}, height {height} and stride {stride}) backing buffer too short; needed {needed} elements, but only got {got}");
@@ -58,7 +59,7 @@ impl<T> IterPtr<T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new(slice: *const [T], stride: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len(slice), stride));
 		Self::new_unchecked(slice, stride)
 	}
 
@@ -218,7 +219,7 @@ impl<T> Iterator for IterPtr<T> {
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len(self.0) };
 
 		if len > 0 {
 			let first = self.0.cast::<T>();
@@ -245,7 +246,7 @@ impl<T> Iterator for IterPtr<T> {
 impl<T> DoubleEndedIterator for IterPtr<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len(self.0) };
 
 		if len > 0 {
 			let first = self.0.cast::<T>();
@@ -266,7 +267,7 @@ impl<T> DoubleEndedIterator for IterPtr<T> {
 impl<T> ExactSizeIterator for IterPtr<T> {
 	#[inline]
 	fn len(&self) -> usize {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len(self.0) };
 		(len + (self.1 - 1)) / self.1
 	}
 }
@@ -301,7 +302,7 @@ impl<T> IterPtrMut<T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new(slice: *mut [T], stride: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len_mut(slice), stride));
 		Self::new_unchecked(slice, stride)
 	}
 
@@ -461,7 +462,7 @@ impl<T> Iterator for IterPtrMut<T> {
 
 	#[inline]
 	fn next(&mut self) -> Option<Self::Item> {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len_mut(self.0) };
 
 		if len > 0 {
 			let first = self.0.cast::<T>();
@@ -488,7 +489,7 @@ impl<T> Iterator for IterPtrMut<T> {
 impl<T> DoubleEndedIterator for IterPtrMut<T> {
 	#[inline]
 	fn next_back(&mut self) -> Option<Self::Item> {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len_mut(self.0) };
 
 		if len > 0 {
 			let first = self.0.cast::<T>();
@@ -509,7 +510,7 @@ impl<T> DoubleEndedIterator for IterPtrMut<T> {
 impl<T> ExactSizeIterator for IterPtrMut<T> {
 	#[inline]
 	fn len(&self) -> usize {
-		let len = unsafe { (*self.0).len() };
+		let len = unsafe { slice_ptr_len_mut(self.0) };
 		(len + (self.1 - 1)) / self.1
 	}
 }

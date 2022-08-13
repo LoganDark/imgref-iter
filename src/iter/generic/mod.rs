@@ -2,6 +2,7 @@ use std::iter::FusedIterator;
 use std::marker::PhantomData;
 use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use imgref::Img;
+use crate::{slice_ptr_len, slice_ptr_len_mut};
 
 mod ptr;
 
@@ -55,7 +56,7 @@ impl<'a, T> Iter<'a, T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new_ptr(slice: *const [T], stride: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len(slice), stride));
 		Self::new_ptr_unchecked(slice, stride)
 	}
 
@@ -244,7 +245,7 @@ impl<'a, T> IterMut<'a, T> {
 	/// would be returned by this iterator. Do not include trailing stride.
 	#[inline]
 	pub unsafe fn new_ptr(slice: *mut [T], stride: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len_mut(slice), stride));
 		Self::new_ptr_unchecked(slice, stride)
 	}
 

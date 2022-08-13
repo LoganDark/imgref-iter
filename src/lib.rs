@@ -42,3 +42,15 @@ pub mod iter;
 
 #[cfg(doc)]
 use traits::*;
+
+// These two utility functions return the length of a slice-ptr, without
+// dereferencing it. This avoids relying on the unstable `slice_ptr_len`
+// feature, but still requires Rust 1.63.0 for `NonNull::len`.
+
+pub(crate) unsafe fn slice_ptr_len<T>(ptr: *const [T]) -> usize {
+	slice_ptr_len_mut(ptr as *mut [T])
+}
+
+pub(crate) unsafe fn slice_ptr_len_mut<T>(ptr: *mut [T]) -> usize {
+	core::ptr::NonNull::new_unchecked(ptr).len()
+}

@@ -3,6 +3,7 @@ use std::ops::Range;
 use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use imgref::Img;
 use crate::iter::{IterPtr, IterPtrMut, SimdIterPtr, SimdIterPtrMut};
+use crate::{slice_ptr_len, slice_ptr_len_mut};
 
 #[derive(Clone, Eq, PartialEq, Debug)]
 pub struct SimdIterWindowsPtr<T, const LANES: usize>(*const [T], usize, usize, Range<usize>);
@@ -44,7 +45,7 @@ impl<T, const LANES: usize> SimdIterWindowsPtr<T, LANES> {
 	/// Panics if the slice does not start and end on an element.
 	#[inline]
 	pub unsafe fn new(slice: *const [T], slice_stride: usize, iter_stride: usize, len: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), slice_stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len(slice), slice_stride));
 		Self::new_unchecked(slice, slice_stride, iter_stride, len)
 	}
 
@@ -132,7 +133,7 @@ impl<T, const LANES: usize> SimdIterWindowsPtr<T, LANES> {
 	#[inline]
 	unsafe fn window(&self, offset: usize) -> *const [T] {
 		let data = self.0.cast::<T>().add(offset);
-		let len = (*self.0).len();
+		let len = slice_ptr_len(self.0);
 		slice_from_raw_parts(data, len)
 	}
 }
@@ -241,7 +242,7 @@ impl<T, const LANES: usize> SimdIterWindowsPtrMut<T, LANES> {
 	/// Panics if the slice does not start and end on an element.
 	#[inline]
 	pub unsafe fn new(slice: *mut [T], slice_stride: usize, iter_stride: usize, len: usize) -> Self {
-		assert!(IterPtr::is_slice_perfect((*slice).len(), slice_stride));
+		assert!(IterPtr::is_slice_perfect(slice_ptr_len_mut(slice), slice_stride));
 		Self::new_unchecked(slice, slice_stride, iter_stride, len)
 	}
 
@@ -329,7 +330,7 @@ impl<T, const LANES: usize> SimdIterWindowsPtrMut<T, LANES> {
 	#[inline]
 	unsafe fn window(&self, offset: usize) -> *mut [T] {
 		let data = self.0.cast::<T>().add(offset);
-		let len = (*self.0).len();
+		let len = slice_ptr_len_mut(self.0);
 		slice_from_raw_parts_mut(data, len)
 	}
 }

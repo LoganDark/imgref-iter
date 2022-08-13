@@ -1,9 +1,9 @@
 [package]
 name = 'imgref-iter'
-version = '0.3.3'
+version = '0.4.0'
 authors = ['LoganDark']
 edition = '2021'
-rust-version = '1.56'
+rust-version = '1.63'
 description = 'A small crate for iterating over the rows or columns of `imgref` buffers'
 documentation = 'https://docs.rs/imgref-iter'
 readme = 'README.md'
