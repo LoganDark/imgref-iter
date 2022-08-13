@@ -1,5 +1,5 @@
-use std::iter::FusedIterator;
-use std::marker::PhantomData;
+use core::iter::FusedIterator;
+use core::marker::PhantomData;
 use imgref::Img;
 use crate::iter::{Iter, IterMut, SimdIter, SimdIterMut};
 

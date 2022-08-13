@@ -1,6 +1,6 @@
-use std::iter::FusedIterator;
-use std::ops::Range;
-use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
+use core::iter::FusedIterator;
+use core::ops::Range;
+use core::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use imgref::Img;
 use crate::iter::{IterPtr, IterPtrMut, SimdIterPtr, SimdIterPtrMut};
 use crate::{slice_ptr_len, slice_ptr_len_mut};

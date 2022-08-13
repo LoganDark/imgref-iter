@@ -37,6 +37,8 @@
 //! include safe versions because the pointer iterators may outlive the
 //! references.
 
+#![no_std]
+
 pub mod traits;
 pub mod iter;
 

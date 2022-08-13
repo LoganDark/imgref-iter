@@ -10,7 +10,7 @@ readme = 'README.md'
 repository = 'https://github.com/LoganDark/imgref-iter'
 license = 'MIT'
 keywords = ['imgref', 'iter', 'row', 'col', 'column']
-categories = ['rust-patterns']
+categories = ['rust-patterns', 'no-std']
 exclude = ['.idea']
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

@@ -1,5 +1,5 @@
-use std::cmp::min;
-use std::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
+use core::cmp::min;
+use core::ptr::{slice_from_raw_parts, slice_from_raw_parts_mut};
 use imgref::Img;
 use crate::{slice_ptr_len, slice_ptr_len_mut};
 
