@@ -212,7 +212,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self(ptr, PhantomData)
 	}
 
-	/// Creates a new [`Iter`] over the specified slice and stride.
+	/// Creates a new [`IterMut`] over the specified slice and stride.
 	///
 	/// # Panics
 	///
@@ -224,7 +224,7 @@ impl<'a, T> IterMut<'a, T> {
 		unsafe { Self::new_ptr(slice as *mut [T], stride) }
 	}
 
-	/// Creates a new [`Iter`] over the specified slice and stride.
+	/// Creates a new [`IterMut`] over the specified slice and stride.
 	///
 	/// # Safety
 	///
@@ -236,7 +236,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::new_ptr_unchecked(slice as *mut [T], stride)
 	}
 
-	/// Creates a new [`Iter`] over the specified slice and stride.
+	/// Creates a new [`IterMut`] over the specified slice and stride.
 	///
 	/// # Panics
 	///
@@ -249,7 +249,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::new_ptr_unchecked(slice, stride)
 	}
 
-	/// Creates a new [`Iter`] over the specified slice and stride.
+	/// Creates a new [`IterMut`] over the specified slice and stride.
 	///
 	/// # Safety
 	///
@@ -261,7 +261,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::wrap(IterPtrMut::new(slice, stride))
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer row.
+	/// Creates a new [`IterMut`] over the specified buffer row.
 	///
 	/// # Panics
 	///
@@ -273,7 +273,7 @@ impl<'a, T> IterMut<'a, T> {
 		unsafe { Self::row_ptr(Img::new_stride(buf, width, height, stride), row) }
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer row.
+	/// Creates a new [`IterMut`] over the specified buffer row.
 	///
 	/// # Safety
 	///
@@ -288,7 +288,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::row_ptr_unchecked(buf, row)
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer row.
+	/// Creates a new [`IterMut`] over the specified buffer row.
 	///
 	/// # Safety
 	///
@@ -305,7 +305,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::new_ptr_unchecked(slice, 1)
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer col.
+	/// Creates a new [`IterMut`] over the specified buffer col.
 	///
 	/// # Panics
 	///
@@ -317,7 +317,7 @@ impl<'a, T> IterMut<'a, T> {
 		unsafe { Self::col_ptr(Img::new_stride(buf, width, height, stride), col) }
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer col.
+	/// Creates a new [`IterMut`] over the specified buffer col.
 	///
 	/// # Safety
 	///
@@ -332,7 +332,7 @@ impl<'a, T> IterMut<'a, T> {
 		Self::col_ptr_unchecked(buf, col)
 	}
 
-	/// Creates a new [`Iter`] over the specified buffer col.
+	/// Creates a new [`IterMut`] over the specified buffer col.
 	///
 	/// # Safety
 	///
